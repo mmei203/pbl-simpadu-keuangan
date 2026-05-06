@@ -1,0 +1,3 @@
+# keuangan_simpadu
+
+## INI KHUSUS MOBILE COK. ADA YANG MEISI KU IGUT
