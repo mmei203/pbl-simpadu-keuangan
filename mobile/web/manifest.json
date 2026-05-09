@@ -1,6 +1,6 @@
 {
-    "name": "keuangan_simpadu",
-    "short_name": "keuangan_simpadu",
+    "name": "mobile",
+    "short_name": "mobile",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
