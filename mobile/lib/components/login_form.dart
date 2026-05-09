@@ -31,6 +31,7 @@ class _LoginFormState extends State<LoginForm> {
             keyboardType: TextInputType.emailAddress,
             cursorColor: Colors.black54,
             decoration: InputDecoration(
+              border: OutlineInputBorder(),
               hintText: 'Gmail',
               labelText: 'Username',
               alignLabelWithHint: true,
@@ -45,6 +46,7 @@ class _LoginFormState extends State<LoginForm> {
             cursorColor: Colors.black54,
             obscureText: obsecurePass,
             decoration: InputDecoration(
+              border: OutlineInputBorder(),
               hintText: 'Password',
               labelText: 'Password',
               alignLabelWithHint: true,

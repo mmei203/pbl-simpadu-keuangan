@@ -24,8 +24,7 @@ class Button extends StatelessWidget {
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: Preset.primaryColor,
-          foregroundColor: Preset.foregroundColor,
-          padding: padding
+          padding: padding,
         ),
         onPressed: disable ? null : onPressed,
         child: Text(
