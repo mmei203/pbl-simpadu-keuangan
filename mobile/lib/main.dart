@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/screens/home_page.dart';
+import 'package:mobile/main_layout.dart';
 import 'package:mobile/screens/login_page.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() async {
-  await dotenv.load();
-
+void main() {
   runApp(MyApp());
 }
 
@@ -20,13 +17,15 @@ class MyApp extends StatelessWidget {
       navigatorKey: navigatorKey,
       title: 'Admin Keuangan',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(useMaterial3: false),
+      theme: ThemeData(
+        useMaterial3: false
+      ),
 
       // routes
-      initialRoute: '/',
+      initialRoute : '/',
       routes: {
-        '/': (context) => const LoginPage(),
-        '/home': (context) => const HomePage()
+        '/' : (context) => const LoginPage(),
+        'main' : (context) => const MainLayout()
       },
     );
   }
