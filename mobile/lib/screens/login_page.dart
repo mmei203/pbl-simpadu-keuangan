@@ -16,41 +16,43 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       backgroundColor: Preset.primaryColor,
       body:Center(
-        child: SizedBox(
-          width: 350,
-          child: Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: 15,
-              vertical: 25
-            ),
-            decoration: BoxDecoration(
-              color: Preset.secondaryColor,
-              borderRadius: BorderRadius.circular(15)
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  child: Image.asset('assets/logo.png'),
-                ),
-                Preset.smallSpace,
-                Text(
-                  AppText.myText['welcome']!,
-                  style: TextStyle(
-                    fontSize: 25,
-                    fontWeight: FontWeight.w800
+        child: SingleChildScrollView(
+          child: SizedBox(
+            width: 350,
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: 15,
+                vertical: 25
+              ),
+              decoration: BoxDecoration(
+                color: Preset.secondaryColor,
+                borderRadius: BorderRadius.circular(15)
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    child: Image.asset('assets/logo.png'),
                   ),
-                ),
-                Text(
-                  AppText.myText['login']!,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.normal
+                  Preset.smallSpace,
+                  Text(
+                    AppText.myText['welcome']!,
+                    style: TextStyle(
+                      fontSize: 25,
+                      fontWeight: FontWeight.w800
+                    ),
                   ),
-                ),
-                Preset.smallSpace,
-                LoginForm()
-              ],
+                  Text(
+                    AppText.myText['login']!,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.normal
+                    ),
+                  ),
+                  Preset.smallSpace,
+                  LoginForm()
+                ],
+              ),
             ),
           ),
         ),
