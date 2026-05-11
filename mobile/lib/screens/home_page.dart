@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/utils/config.dart';
+import 'package:mobile/utils/text.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -23,17 +24,18 @@ class _HomePageState extends State<HomePage> {
         centerTitle: true,
         title: Text(
           'SIMPADU',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w800
-          ),
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
         ),
         actions: [
           IconButton(
-            onPressed: (){}, icon: Icon(Icons.notifications_outlined)
+            onPressed: () {},
+            icon: Icon(Icons.notifications_outlined),
           ),
           IconButton(
-            onPressed: (){}, icon: Icon(Icons.account_circle_outlined)
+            onPressed: () {
+              Navigator.pushNamed(context, '/profile');
+            },
+            icon: Icon(Icons.account_circle_outlined),
           ),
         ],
       ),
