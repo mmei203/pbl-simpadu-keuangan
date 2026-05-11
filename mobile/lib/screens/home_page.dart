@@ -39,6 +39,25 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
+            
+      // body
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // welcome text
+            Text(AppText.myText['welcome']!),
+            Text(
+              'Admin Keuangan',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
