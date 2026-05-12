@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/providers/user_provider.dart';
 import 'package:mobile/utils/config.dart';
-import 'package:mobile/utils/text.dart';
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -11,7 +12,17 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      context.read<UserProvider>().getAllUser();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final UserProvider userProvider = context.watch<UserProvider>();
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Preset.primaryColor,
@@ -39,24 +50,14 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-            
+
       // body
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // welcome text
-            Text(AppText.myText['welcome']!),
-            Text(
-              'Admin Keuangan',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 20
-              ),
-            ),
-          ],
-        ),
+      body: ListView.builder(
+        itemCount: userProvider.data?.length ?? 0,
+        itemBuilder: (BuildContext context, int index) {
+          final item = userProvider.data![index];
+          return Card(child: ListTile(title: Text('${item.name}')));
+        },
       ),
     );
   }
