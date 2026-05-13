@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/components/cards.dart';
+import 'package:mobile/components/menu_card.dart';
 import 'package:mobile/utils/config.dart';
-import 'package:mobile/utils/text.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -12,6 +13,9 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  // list fitur
+
+  // dummy data card mahasiswa
   final List<Map<String, dynamic>> _dummy = [
     {'title': 'Total Mahasiswa', 'value': '156', 'color': Preset.primaryColor},
     {'title': 'Sudah Bayar', 'value': '156', 'color': Preset.saveColor},
@@ -179,6 +183,78 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ],
                       ),
+                    ),
+
+                    Preset.smallSpace,
+
+                    // fitur Layanan
+                    LayoutBuilder(
+                      builder:
+                          (BuildContext context, BoxConstraints constraints) {
+                            double itemWidth = (constraints.maxWidth - 20) / 2;
+
+                            return Wrap(
+                              spacing: 10,
+                              runSpacing: 10,
+                              children: [
+                                SizedBox(
+                                  width: itemWidth,
+                                  child: MenuCard(
+                                    title: 'UKT',
+                                    icon: FontAwesomeIcons.creditCard,
+                                    color: Color.fromRGBO(37, 99, 235, 1),
+                                    onTap: () {
+                                      print('Pindah ke halaman UKT');
+                                    },
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: itemWidth,
+                                  child: MenuCard(
+                                    title: 'Beasiswa',
+                                    icon: FontAwesomeIcons.award,
+                                    color: Color.fromRGBO(124, 58, 237, 1),
+                                    onTap: () {
+                                      print('Pindah ke halaman Beasiswa');
+                                    },
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: itemWidth,
+                                  child: MenuCard(
+                                    title: 'Status Mahasiswa',
+                                    icon: FontAwesomeIcons.user,
+                                    color: Color.fromRGBO(15, 118, 110, 1),
+                                    onTap: () {
+                                      print('Pindah ke halaman status');
+                                    },
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: itemWidth,
+                                  child: MenuCard(
+                                    title: 'Penerimaan Pembayaran',
+                                    icon: FontAwesomeIcons.dollarSign,
+                                    color: Color.fromRGBO(22, 163, 74, 1),
+                                    onTap: () {
+                                      print('Pindah ke halaman Pembayaran');
+                                    },
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: itemWidth,
+                                  child: MenuCard(
+                                    title: 'Cicilan',
+                                    icon: FontAwesomeIcons.clock,
+                                    color: Color.fromRGBO(234, 88, 12, 1),
+                                    onTap: () {
+                                      print('Pindah ke halaman Cicilan');
+                                    },
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                     ),
                   ],
                 ),
