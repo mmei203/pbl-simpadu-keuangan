@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/providers/user_provider.dart';
 import 'package:mobile/utils/config.dart';
-import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -12,52 +10,51 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   @override
-  void initState() {
-    super.initState();
-    Future.microtask(() {
-      context.read<UserProvider>().getAllUser();
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final UserProvider userProvider = context.watch<UserProvider>();
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Preset.primaryColor,
-        leadingWidth: 70,
         elevation: 0,
-        leading: Container(
-          padding: EdgeInsets.only(left: 20, bottom: 10),
-          child: Image.asset('assets/logo.png'),
+        toolbarHeight: 65,
+
+        // logo simpadu
+        leadingWidth: 80,
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: SizedBox(
+            child: Image.asset('assets/logo.png'),
+          ),
         ),
+
+        // Tulisan simpadu
         centerTitle: true,
         title: Text(
           'SIMPADU',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-        ),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: Icon(Icons.notifications_outlined),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 20
           ),
-          IconButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/profile');
-            },
-            icon: Icon(Icons.account_circle_outlined),
+        ),
+
+        // notif & profile
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 10),
+            child: Row(
+              spacing: 8,
+              children: [
+                Icon(
+                  Icons.notifications_none,
+                  size: 30,
+                ),
+                Icon(
+                  Icons.account_circle_rounded,
+                  size: 30,
+                )
+              ],
+            ),
           ),
         ],
-      ),
-
-      // body
-      body: ListView.builder(
-        itemCount: userProvider.data?.length ?? 0,
-        itemBuilder: (BuildContext context, int index) {
-          final item = userProvider.data![index];
-          return Card(child: ListTile(title: Text('${item.name}')));
-        },
       ),
     );
   }
