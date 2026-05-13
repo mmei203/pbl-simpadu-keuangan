@@ -96,6 +96,8 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 Preset.smallSpace,
+
+                // Card Mahasiswa
                 GridView.builder(
                   shrinkWrap: true,
                   physics: NeverScrollableScrollPhysics(),
@@ -115,6 +117,61 @@ class _HomePageState extends State<HomePage> {
                       color: item['color'],
                     );
                   },
+                ),
+
+                // Notifikasi
+                Container(
+                  padding: EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                    color: Color.fromRGBO(255, 238, 170, 100),
+                    borderRadius: BorderRadius.all(Radius.circular(15)),
+                  ),
+                  child: Column(
+                    spacing: 8,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Judul
+                      Row(
+                        spacing: 4,
+                        children: [
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            color: Color.fromRGBO(245, 158, 11, 100),
+                            size: 30,
+                          ),
+                          Text(
+                            'Pemberitahuan',
+                            style: GoogleFonts.poppins(
+                              color: Color.fromRGBO(146, 64, 14, 100),
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600
+                            ),
+                          ),
+                        ],
+                      ),
+                      // isi pemberitahuan
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                        child: Column(
+                          spacing: 4,
+                          children: [
+                            Text(
+                              'Notif 1',
+                              style: GoogleFonts.poppins(
+                                color: Color.fromRGBO(146, 64, 14, 100),
+                              ),
+                            ),
+                            Text(
+                              'Notif 2',
+                              style: GoogleFonts.poppins(
+                                color: Color.fromRGBO(146, 64, 14, 100),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
