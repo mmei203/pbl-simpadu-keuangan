@@ -70,111 +70,120 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
 
-      body: Column(
+      body: ListView(
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // sambutan atmin
-                SizedBox(
-                  child: SizedBox(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(AppText.myText['welcome']!),
-                        Text(
-                          'Atmin Member',
-                          style: GoogleFonts.poppins(
-                            fontSize: 25,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+          Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
                 ),
-                Preset.smallSpace,
-
-                // Card Mahasiswa
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  itemCount: _dummy.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 1.4,
-                  ),
-                  itemBuilder: (context, index) {
-                    final item = _dummy[index];
-
-                    return CustomDashboardCard(
-                      title: item['title'],
-                      value: item['value'],
-                      color: item['color'],
-                    );
-                  },
-                ),
-
-                // Notifikasi
-                Container(
-                  padding: EdgeInsets.all(15),
-                  decoration: BoxDecoration(
-                    color: Color.fromRGBO(255, 238, 170, 100),
-                    borderRadius: BorderRadius.all(Radius.circular(15)),
-                  ),
-                  child: Column(
-                    spacing: 8,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Judul
-                      Row(
-                        spacing: 4,
-                        children: [
-                          Icon(
-                            Icons.warning_amber_rounded,
-                            color: Color.fromRGBO(245, 158, 11, 100),
-                            size: 30,
-                          ),
-                          Text(
-                            'Pemberitahuan',
-                            style: GoogleFonts.poppins(
-                              color: Color.fromRGBO(146, 64, 14, 100),
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600
-                            ),
-                          ),
-                        ],
-                      ),
-                      // isi pemberitahuan
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // sambutan atmin
+                    SizedBox(
+                      child: SizedBox(
                         child: Column(
-                          spacing: 4,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            Text(AppText.myText['welcome']!),
                             Text(
-                              'Notif 1',
+                              'Atmin Member',
                               style: GoogleFonts.poppins(
-                                color: Color.fromRGBO(146, 64, 14, 100),
-                              ),
-                            ),
-                            Text(
-                              'Notif 2',
-                              style: GoogleFonts.poppins(
-                                color: Color.fromRGBO(146, 64, 14, 100),
+                                fontSize: 25,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    Preset.smallSpace,
+
+                    // Card Mahasiswa
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: NeverScrollableScrollPhysics(),
+                      itemCount: _dummy.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 1.4,
+                      ),
+                      itemBuilder: (context, index) {
+                        final item = _dummy[index];
+
+                        return CustomDashboardCard(
+                          title: item['title'],
+                          value: item['value'],
+                          color: item['color'],
+                        );
+                      },
+                    ),
+
+                    Preset.smallSpace,
+
+                    // Notifikasi
+                    Container(
+                      padding: EdgeInsets.all(15),
+                      decoration: BoxDecoration(
+                        color: Color.fromRGBO(255, 238, 170, 100),
+                        borderRadius: BorderRadius.all(Radius.circular(15)),
+                      ),
+                      child: Column(
+                        spacing: 8,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Judul
+                          Row(
+                            spacing: 4,
+                            children: [
+                              Icon(
+                                Icons.warning_amber_rounded,
+                                color: Color.fromRGBO(245, 158, 11, 100),
+                                size: 30,
+                              ),
+                              Text(
+                                'Pemberitahuan',
+                                style: GoogleFonts.poppins(
+                                  color: Color.fromRGBO(146, 64, 14, 100),
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          // isi pemberitahuan
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 30),
+                            child: Column(
+                              spacing: 4,
+                              children: [
+                                Text(
+                                  'Notif 1',
+                                  style: GoogleFonts.poppins(
+                                    color: Color.fromRGBO(146, 64, 14, 100),
+                                  ),
+                                ),
+                                Text(
+                                  'Notif 2',
+                                  style: GoogleFonts.poppins(
+                                    color: Color.fromRGBO(146, 64, 14, 100),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
