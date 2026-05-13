@@ -4,6 +4,7 @@ import dashboard from "../views/dashboard.vue";
 import statusmahasiswa from "../views/statusmahasiswa.vue";
 import Ukt from "@/views/ukt.vue";
 import Beasiswa from "@/views/beasiswa.vue";
+import TambahBeasiswa from "@/views/tambahbeasiswa.vue";
 import Pembayaran from "@/views/pembayaran.vue";
 import Cicilan from "@/views/cicilan.vue";
 
@@ -39,6 +40,11 @@ const router = createRouter({
       path: "/beasiswa",
       name: "Beasiswa",
       component: Beasiswa,
+    },
+    {
+      path: "/beasiswa/tambah",
+      name: "Tambah Beasiswa",
+      component: TambahBeasiswa,
     },
     {
       path: "/pembayaran",

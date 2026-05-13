@@ -32,7 +32,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
                   </svg>
                 </span>
-                <input type="text" v-model="username" placeholder="Masukkan username admin" required />
+                <input type="text" v-model="payload.email" placeholder="Masukkan username admin" required />
               </div>
             </div>
 
@@ -44,7 +44,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
                   </svg>
                 </span>
-                <input :type="showPassword ? 'text' : 'password'" v-model="password" placeholder="Masukkan password" required />
+                <input :type="showPassword ? 'text' : 'password'" v-model="payload.password" placeholder="Masukkan password" required />
                 
                 <button type="button" class="toggle-eye" @click="showPassword = !showPassword">
                   <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="eye-icon-svg">
@@ -71,7 +71,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import axios from 'axios';
+import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router'; 
 
 const router = useRouter();
@@ -87,23 +88,44 @@ const ADMIN_DUMMY = {
   pass: 'admin123'
 };
 
+const payload = reactive({
+  email: "",
+  password: "",
+});
+
 const handleLogin = () => {
   isLoading.value = true;
   errorMessage.value = '';
-
-  // Simulasi loading 1 detik
-  setTimeout(() => {
-    if (username.value === ADMIN_DUMMY.user && password.value === ADMIN_DUMMY.pass) {
-      console.log("Login Berhasil!");
-      // Pastikan di router/index.js ada path '/dashboard'
+  axios.post('https://be.karlearn.site/api/auth/login', payload)
+    .then(response => {
+      console.log("Login Berhasil!", response.data);
+      localStorage.setItem('token', response.data.data.access_token); // Simpan token jika diperlukan
       router.push('/dashboard').catch(err => {
         console.error("Gagal pindah halaman:", err);
       });
-    } else {
+    })
+    .catch(error => {
+      console.error("Login Gagal:", error);
       errorMessage.value = "Username atau Password Admin salah!";
-    }
-    isLoading.value = false;
-  }, 1000);
+    })
+    .finally(() => {
+      isLoading.value = false;
+    });
+
+  // Simulasi loading 1 detik
+  // setTimeout(() => {
+  //   if (username.value === ADMIN_DUMMY.user && password.value === ADMIN_DUMMY.pass) {
+  //     console.log("Login Berhasil!");
+  //     // Pastikan di router/index.js ada path '/dashboard'
+  //     router.push('/dashboard').catch(err => {
+  //       console.error("Gagal pindah halaman:", err);
+  //     });
+  //   } else {
+  //     errorMessage.value = "Username atau Password Admin salah!";
+  //   }
+  //   isLoading.value = false;
+  // }, 1000);
+
 };
 </script>
 

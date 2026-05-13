@@ -132,7 +132,7 @@ const menus = [
       { name: "Status Mahasiswa", path: "/status-mahasiswa", icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 3.077 16.2M15 19.128L15.39 15.75M3.077 16.2a12.318 12.318 0 0 1-.896-2.153m5.921-10.9a6.375 6.375 0 1 0-7.5 6.375" /></svg>` },
       { name: "UKT", path: "/ukt", icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" /></svg>` },
       { name: "Beasiswa", path: "/beasiswa", icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 0 0-2.633.156A10.25 10.25 0 0 1 19.668 19H3.75l.577-21.927m19.31 0c.58.232 1.159.479 1.738.726a10.25 10.25 0 0 1-17.313-7.987m0 0a20.055 20.055 0 0 1 1.738-.726" /></svg>` },
-      { name: "cicilan", path: "/cicilan", icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" /></svg>` }
+      { name: "Cicilan", path: "/cicilan", icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" /></svg>` }
     ]
   },
   { 
@@ -145,14 +145,14 @@ const menus = [
 
 <style>
 /* ... CSS sama seperti sebelumnya ... */
-.dashboard-layout { display: flex; min-height: 100vh; background: #f4f7fa; }
-.sidebar { width: 240px; background: #1e3a8a; color: white; padding: 20px ; padding-bottom: 9px; padding-left:-10px;  display: flex; flex-direction: column; transition: 0.3s; flex-shrink: 0; }
+.dashboard-layout { display: flex; min-height: 100vh; background: #f4f7fa;}
+.sidebar { width: 240px; background: #1e3a8a; color: white; padding: 20px ; padding-bottom: 9px;  display: flex; flex-direction: column; transition: 0.3s; flex-shrink: 0; }
 .sidebar.collapsed { width: 80px; }
 .logo-section { display: flex; align-items: center; gap: 10px; margin-bottom: 30px; padding: 0 10px; }
 .logo-circle { min-width: 32px; height: 32px; border-radius: 8px; overflow: hidden; }
 .logo-circle img { width: 100%; height: 100%; object-fit: cover; }
 .toggle-btn-inline { background: none; border: none; color: white; cursor: pointer; margin-left: auto; }
-.menu { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.menu { display: flex; flex-direction: column; gap: 9px; flex: 1; }
 .menu-item { background: transparent; border: none; color: #cbd5e1; padding: 12px 15px; border-radius: 12px; display: flex; align-items: center; gap: 12px; cursor: pointer; width: 100%; transition: 0.2s; font-size: 13px; }
 .menu-item:hover, .menu-item.active { background: rgba(255, 255, 255, 0.1); color: white; }
 .icon-wrapper { width: 20px; display: flex; justify-content: center; }

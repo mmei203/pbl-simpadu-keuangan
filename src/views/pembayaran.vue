@@ -31,8 +31,6 @@
       <div class="filter-group">
         <select v-model="selectedMethod">
           <option value="">Semua Metode</option>
-          <option value="Transfer Bank">Transfer Bank</option>
-          <option value="E-Wallet">E-Wallet</option>
           <option value="VA">Virtual Account</option>
         </select>
         <select v-model="selectedStatus">
@@ -111,10 +109,10 @@ const selectedMethod = ref("");
 const selectedStatus = ref("");
 
 const tableData = ref([
-  { id: "TX9901", nim: "C030324077", nama: "Budi Siregar", metode: "Transfer Bank", nominal: "Rp 1.500.000", waktu: "12 Mei 2026, 09:45", status: "Berhasil" },
-  { id: "TX9902", nim: "C030324078", nama: "Siti Aminah", metode: "E-Wallet", nominal: "Rp 1.500.000", waktu: "12 Mei 2026, 10:20", status: "Proses" },
+  { id: "TX9901", nim: "C030324077", nama: "Budi Siregar", metode: "VA", nominal: "Rp 1.500.000", waktu: "12 Mei 2026, 09:45", status: "Berhasil" },
+  { id: "TX9902", nim: "C030324078", nama: "Siti Aminah", metode: "VA", nominal: "Rp 1.500.000", waktu: "12 Mei 2026, 10:20", status: "Proses" },
   { id: "TX9903", nim: "C030324079", nama: "Rudi Hartono", metode: "VA", nominal: "Rp 750.000", waktu: "11 Mei 2026, 14:15", status: "Berhasil" },
-  { id: "TX9904", nim: "C030324080", nama: "Desi Wulandari", metode: "Transfer Bank", nominal: "Rp 1.500.000", waktu: "11 Mei 2026, 16:30", status: "Gagal" },
+  { id: "TX9904", nim: "C030324080", nama: "Desi Wulandari", metode: "VA", nominal: "Rp 1.500.000", waktu: "11 Mei 2026, 16:30", status: "Gagal" },
   { id: "TX9905", nim: "C030324081", nama: "Ahmad Fauzi", metode: "VA", nominal: "Rp 2.000.000", waktu: "10 Mei 2026, 08:00", status: "Berhasil" },
 ]);
 

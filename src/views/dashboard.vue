@@ -92,6 +92,7 @@
 </template>
 
 <script setup>
+console.log (localStorage.getItem('token')); // Cek token yang tersimpan di localStorage
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 
