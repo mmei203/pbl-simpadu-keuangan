@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/utils/config.dart';
 
 class HomePage extends StatefulWidget {
@@ -30,10 +31,9 @@ class _HomePageState extends State<HomePage> {
         centerTitle: true,
         title: Text(
           'SIMPADU',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 20
-          ),
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold
+          )
         ),
 
         // notif & profile
