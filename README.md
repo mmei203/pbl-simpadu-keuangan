@@ -1,3 +1,6 @@
-## Sistem admin keuangan simpadu
+## Keuangan simpadu mobile
 
-git pull dulu baru di push
+cara menggunakan:
+1. git clone https://github.com/mmei203/pbl-simpadu-keuangan.git
+2. cd mobile
+3. flutter pub get
