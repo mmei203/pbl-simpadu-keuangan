@@ -28,7 +28,7 @@ class CariMhs extends StatelessWidget {
           border: InputBorder.none,
           suffixIcon: IconButton(
             onPressed: onSearch,
-            icon: FaIcon(FontAwesomeIcons.magnifyingGlass),
+            icon: FaIcon(FontAwesomeIcons.magnifyingGlass, size: 16,),
             color: Colors.black54,
           ),
         ),
