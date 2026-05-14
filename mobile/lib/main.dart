@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/providers/user_provider.dart';
+import 'package:mobile/screens/beasiswa_page.dart';
+import 'package:mobile/screens/cicilan_page.dart';
 import 'package:mobile/screens/home_page.dart';
 import 'package:mobile/screens/login_page.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:mobile/screens/pembayaran_page.dart';
 import 'package:mobile/screens/profile_page.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile/screens/statusmhs_page.dart';
+import 'package:mobile/screens/ukt_page.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
@@ -55,6 +60,11 @@ class _MyAppState extends State<MyApp> {
         '/': (context) => const LoginPage(),
         '/home': (context) => const HomePage(),
         '/profile': (context) => const ProfilePage(),
+        '/ukt': (context) => const UktPage(),
+        '/statusmhs': (context) => const StatusMhsPage(),
+        '/beasiswa': (context) => const BeasiswaPage(),
+        '/pembayaran': (context) => const PembayaranPage(),
+        '/cicilan': (context) => const CicilanPage(),
       },
     );
   }
