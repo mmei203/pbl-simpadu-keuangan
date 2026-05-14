@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:mobile/components/search.dart';
+import 'package:mobile/utils/config.dart';
 
 class UktPage extends StatefulWidget {
   const UktPage({super.key});
@@ -23,8 +24,8 @@ class _UktPageState extends State<UktPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        elevation: 1,
-        backgroundColor: Colors.white,
+        elevation: 2,
+        backgroundColor: Preset.backgroundColor,
         leading: IconButton(
           icon: FaIcon(FontAwesomeIcons.angleLeft, color: Colors.black),
           onPressed: () {
@@ -35,6 +36,7 @@ class _UktPageState extends State<UktPage> {
         title: Text('Kelola UKT', style: TextStyle(color: Colors.black)),
       ),
       body: Container(
+        color: Preset.backgroundColor,
         padding: EdgeInsets.all(15),
         child: Column(
           children: [
