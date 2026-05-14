@@ -64,7 +64,9 @@ class _HomePageState extends State<HomePage> {
                   iconSize: 30,
                 ),
                 IconButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/profile');
+                  },
                   icon: Icon(Icons.account_circle_outlined),
                   iconSize: 30,
                 ),
@@ -204,6 +206,7 @@ class _HomePageState extends State<HomePage> {
                                     icon: FontAwesomeIcons.creditCard,
                                     color: Color.fromRGBO(37, 99, 235, 1),
                                     onTap: () {
+                                      Navigator.pushNamed(context, '/ukt');
                                       print('Pindah ke halaman UKT');
                                     },
                                   ),
@@ -215,6 +218,7 @@ class _HomePageState extends State<HomePage> {
                                     icon: FontAwesomeIcons.award,
                                     color: Color.fromRGBO(124, 58, 237, 1),
                                     onTap: () {
+                                      Navigator.pushNamed(context, '/beasiswa');
                                       print('Pindah ke halaman Beasiswa');
                                     },
                                   ),
@@ -226,6 +230,7 @@ class _HomePageState extends State<HomePage> {
                                     icon: FontAwesomeIcons.user,
                                     color: Color.fromRGBO(15, 118, 110, 1),
                                     onTap: () {
+                                      Navigator.pushNamed(context, '/statusmhs');
                                       print('Pindah ke halaman status');
                                     },
                                   ),
@@ -237,6 +242,7 @@ class _HomePageState extends State<HomePage> {
                                     icon: FontAwesomeIcons.dollarSign,
                                     color: Color.fromRGBO(22, 163, 74, 1),
                                     onTap: () {
+                                      Navigator.pushNamed(context, '/pembayaran');
                                       print('Pindah ke halaman Pembayaran');
                                     },
                                   ),
@@ -248,6 +254,7 @@ class _HomePageState extends State<HomePage> {
                                     icon: FontAwesomeIcons.clock,
                                     color: Color.fromRGBO(234, 88, 12, 1),
                                     onTap: () {
+                                      Navigator.pushNamed(context, '/cicilan');
                                       print('Pindah ke halaman Cicilan');
                                     },
                                   ),
