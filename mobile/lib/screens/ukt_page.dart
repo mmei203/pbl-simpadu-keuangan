@@ -1,10 +1,60 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:mobile/components/search.dart';
 
-class UktPage extends StatelessWidget {
+class UktPage extends StatefulWidget {
   const UktPage({super.key});
 
   @override
+  State<UktPage> createState() => _UktPageState();
+}
+
+class _UktPageState extends State<UktPage> {
+  final TextEditingController _searchController = TextEditingController();
+
+  void _executeSearch() {
+    String query = _searchController.text;
+    if (query.isNotEmpty) {
+      print('cari $query');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Container();
+    return Scaffold(
+      appBar: AppBar(
+        elevation: 1,
+        backgroundColor: Colors.white,
+        leading: IconButton(
+          icon: FaIcon(FontAwesomeIcons.angleLeft, color: Colors.black),
+          onPressed: () {
+            print('kembali ke awal');
+            Navigator.pop(context);
+          },
+        ),
+        title: Text('Kelola UKT', style: TextStyle(color: Colors.black)),
+      ),
+      body: Container(
+        padding: EdgeInsets.all(15),
+        child: Column(
+          children: [
+            // cari mahasiswa
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: FractionallySizedBox(
+                widthFactor: 0.65,
+                child: SizedBox(
+                  height: 45,
+                  child: CariMhs(
+                    controller: _searchController,
+                    onSearch: _executeSearch,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
