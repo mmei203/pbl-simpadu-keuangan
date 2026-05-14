@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mobile/providers/user_provider.dart';
 import 'package:mobile/screens/beasiswa_page.dart';
 import 'package:mobile/screens/cicilan_page.dart';
@@ -16,13 +17,17 @@ void main() async {
   await dotenv.load();
   WidgetsFlutterBinding.ensureInitialized();
 
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
   runApp(
     MultiProvider(
       providers: [ChangeNotifierProvider(create: (_) => UserProvider())],
       child: MyApp(),
     ),
   );
-  
 }
 
 class MyApp extends StatefulWidget {
