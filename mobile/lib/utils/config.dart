@@ -23,6 +23,8 @@ class Preset {
   static final primaryColor = Color.fromRGBO(30, 54, 138, 100);
   static final secondaryColor = Color.fromRGBO(204, 224, 251, 100);
   static final foregroundColor = Color.fromRGBO(239, 256, 255, 100);
+  static final backgroundColor = Color.fromRGBO(239,246, 255, 100);
+  static final background2Color = Color.fromRGBO(232, 248, 245, 100);
   static final mainColor = Color.fromRGBO(41, 128, 185, 100);
   static final editColor = Color.fromRGBO(243, 156, 18, 100);
   static final disableColor = Color.fromRGBO(189, 195, 199, 100);
