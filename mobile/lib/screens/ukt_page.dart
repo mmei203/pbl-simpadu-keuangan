@@ -39,7 +39,7 @@ class _UktPageState extends State<UktPage> {
       ),
       body: Container(
         color: Preset.backgroundColor,
-        padding: EdgeInsets.all(15),
+        padding: EdgeInsets.only(left: 15, right: 15, top: 15, bottom: 90),
         child: Column(
           children: [
             // cari mahasiswa
@@ -59,10 +59,7 @@ class _UktPageState extends State<UktPage> {
             Preset.smallSpace,
             // Tabel UKT
             Expanded(
-              child: TabelMahasiswa(
-                data: dummyMahasiswa, 
-                labelStatus: "UKT",
-              ),
+              child: TabelMahasiswa(data: dummyMahasiswa, labelStatus: "UKT"),
             ),
           ],
         ),
