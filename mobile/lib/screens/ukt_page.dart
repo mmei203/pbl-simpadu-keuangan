@@ -59,7 +59,7 @@ class _UktPageState extends State<UktPage> {
             Preset.smallSpace,
             // Tabel UKT
             Expanded(
-              child: TabelMahasiswa(data: dummyMahasiswa, labelStatus: "UKT"),
+              child: TabelMahasiswa(data: dummyUKT, labelStatus: "UKT"),
             ),
           ],
         ),
