@@ -5,7 +5,7 @@ import 'package:mobile/utils/config.dart';
 
 class TabelMahasiswa extends StatelessWidget {
   final List<Mahasiswa> data;
-  final String labelStatus; // Header dinamis (UKT/Status/Pembayaran)
+  final String labelStatus; 
 
   const TabelMahasiswa({
     super.key,
@@ -47,35 +47,41 @@ class TabelMahasiswa extends StatelessWidget {
   }
 
   Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: const BoxDecoration(
-        color: Color.fromRGBO(239, 246, 255, 100),
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(12),
-          topRight: Radius.circular(12),
-        ),
-      ),
-      child: Table(
-        columnWidths: const {
-          0: FlexColumnWidth(2),
-          1: FlexColumnWidth(1.5),
-          2: FlexColumnWidth(1.5),
-          3: FlexColumnWidth(1.5),
-          4: FlexColumnWidth(1),
-        },
-        children: [
-          TableRow(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: const BoxDecoration(
+            color: Color.fromRGBO(239, 246, 255, 100),
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+            ),
+          ),
+          child: Table(
+            columnWidths: const {
+              0: FlexColumnWidth(2),
+              1: FlexColumnWidth(1.5),
+              2: FlexColumnWidth(1.5),
+              3: FlexColumnWidth(1.5),
+              4: FlexColumnWidth(1),
+            },
             children: [
-              _headerText("NIM"),
-              _headerText("Nama"),
-              _headerText("Jurusan"),
-              _headerText(labelStatus),
-              _headerText("Aksi"),
+              TableRow(
+                children: [
+                  _headerText("NIM"),
+                  _headerText("Nama"),
+                  _headerText("Jurusan"),
+                  _headerText(labelStatus),
+                  _headerText("Aksi"),
+                ],
+              ),
             ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -100,7 +106,11 @@ class TabelMahasiswa extends StatelessWidget {
   Widget _headerText(String text) => Center(
     child: Text(
       text,
-      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+      textAlign: TextAlign.center,
+      style: const TextStyle(
+        fontWeight: FontWeight.bold, 
+        fontSize: 12
+      ),
     ),
   );
   Widget _cellText(String text) => Padding(
