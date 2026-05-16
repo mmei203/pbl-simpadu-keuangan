@@ -46,7 +46,7 @@ class _BeasiswaPageState extends State<BeasiswaPage> {
       ),
       backgroundColor: Preset.backgroundColor,
       body: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.only(top: 8, left: 8, right: 8, bottom: 60),
         child: Column(
           children: [
             // Bagian search
@@ -76,7 +76,7 @@ class _BeasiswaPageState extends State<BeasiswaPage> {
               ),
             ),
             Expanded(
-              child: TabelMahasiswa(data: dummyUKT, labelStatus: "UKT"),
+              child: TabelMahasiswa(data: dummyBeasiswa, labelStatus: "Beasiswa"),
             ),
           ],
         ),
