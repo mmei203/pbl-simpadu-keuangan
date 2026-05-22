@@ -20,9 +20,9 @@ class UserResponse {
 
   factory UserResponse.fromJson(Map<String, dynamic> json) {
     return UserResponse(
-      email: json['email'],
-      name: json['name'],
-      role_name: json['role_name'],
+      email: json['user_email'] ?? '',
+      name: json['user_name'] ?? 'Admin',
+      role_name: json['role_name'] ?? '',
     );
   }
 }
