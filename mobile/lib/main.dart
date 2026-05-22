@@ -66,7 +66,7 @@ class _MyAppState extends State<MyApp> {
         '/home': (context) => const HomePage(),
         '/profile': (context) => const ProfilePage(),
         '/ukt': (context) => const UktPage(),
-        '/statusmhs': (context) => const StatusMhsPage(),
+        '/statusmhs': (context) => const StatusmhsPage(),
         '/beasiswa': (context) => const BeasiswaPage(),
         '/pembayaran': (context) => const PembayaranPage(),
         '/cicilan': (context) => const CicilanPage(),
