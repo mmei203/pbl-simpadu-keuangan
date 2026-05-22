@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mobile/components/cards.dart';
 import 'package:mobile/components/menu_card.dart';
 import 'package:mobile/utils/config.dart';
+import 'package:provider/provider.dart';
+import 'package:mobile/providers/user_provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -13,25 +14,9 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // list fitur
-
-  // dummy data card mahasiswa
-  final List<Map<String, dynamic>> _dummy = [
-    {'title': 'Total Mahasiswa', 'value': '156', 'color': Preset.primaryColor},
-    {'title': 'Sudah Bayar', 'value': '156', 'color': Preset.saveColor},
-    {'title': 'Sedang Mencicil', 'value': '156', 'color': Preset.editColor},
-    {'title': 'Belum Bayar', 'value': '156', 'color': Preset.errorColor},
-  ];
-
-  void updateData() {
-    setState(() {
-      // Logika untuk mengubah data, contoh:
-      _dummy[0]['value'] = '200';
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<UserProvider>().loggedInUser;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Preset.primaryColor,
@@ -96,7 +81,7 @@ class _HomePageState extends State<HomePage> {
                           children: [
                             Text(AppText.myText['welcome']!),
                             Text(
-                              'Atmin Member',
+                              user?.name.split(' ').map((w) => w[0].toUpperCase() + w.substring(1)).join(' ') ?? 'Admin',
                               style: GoogleFonts.poppins(
                                 fontSize: 25,
                                 fontWeight: FontWeight.w700,
@@ -108,28 +93,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     Preset.smallSpace,
 
-                    // Card Mahasiswa
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      itemCount: _dummy.length,
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 1.4,
-                      ),
-                      itemBuilder: (context, index) {
-                        final item = _dummy[index];
-
-                        return CustomDashboardCard(
-                          title: item['title'],
-                          value: item['value'],
-                          color: item['color'],
-                        );
-                      },
-                    ),
-
+                    // Card Mahasiswa (Tunggu API kelompok 3)
                     Preset.smallSpace,
 
                     // Notifikasi
@@ -230,7 +194,10 @@ class _HomePageState extends State<HomePage> {
                                     icon: FontAwesomeIcons.user,
                                     color: Color.fromRGBO(15, 118, 110, 1),
                                     onTap: () {
-                                      Navigator.pushNamed(context, '/statusmhs');
+                                      Navigator.pushNamed(
+                                        context,
+                                        '/statusmhs',
+                                      );
                                       print('Pindah ke halaman status');
                                     },
                                   ),
@@ -242,7 +209,10 @@ class _HomePageState extends State<HomePage> {
                                     icon: FontAwesomeIcons.dollarSign,
                                     color: Color.fromRGBO(22, 163, 74, 1),
                                     onTap: () {
-                                      Navigator.pushNamed(context, '/pembayaran');
+                                      Navigator.pushNamed(
+                                        context,
+                                        '/pembayaran',
+                                      );
                                       print('Pindah ke halaman Pembayaran');
                                     },
                                   ),
