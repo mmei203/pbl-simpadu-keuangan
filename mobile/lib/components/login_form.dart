@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/components/button.dart';
 import 'package:mobile/models/user.dart';
+import 'package:mobile/providers/user_provider.dart';
 import 'package:mobile/services/user_service.dart';
 import 'package:mobile/utils/config.dart';
+import 'package:provider/provider.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
@@ -41,20 +43,20 @@ class _LoginFormState extends State<LoginForm> {
       password: _passController.text,
     );
 
-    bool success = await userService.createUser(userRequests);
+    UserResponse? user = await userService.login(
+      userRequests,
+    ); // pakai method baru
 
-    if (success) {
+    if (user != null) {
       if (!mounted) return;
 
-      Navigator.pushReplacementNamed(
-        context,
-        '/home',
-      );
+      // Simpan ke provider
+      context.read<UserProvider>().setLoggedInUser(user);
+
+      Navigator.pushReplacementNamed(context, '/home');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Email atau Password salah'),
-        ),
+        const SnackBar(content: Text('Email atau Password salah')),
       );
     }
   }
@@ -67,7 +69,6 @@ class _LoginFormState extends State<LoginForm> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-
           // EMAIL
           TextFormField(
             controller: _emailController,
