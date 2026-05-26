@@ -37,18 +37,15 @@ class Preset {
   static final largeSpace = SizedBox(height: screenHeight! * 0.08);
 
   static const outlinedBorder = OutlineInputBorder(
-    borderRadius: BorderRadius.all(Radius.circular(8)),
   );
 
   static const focusBorder = OutlineInputBorder(
-    borderRadius: BorderRadius.all(Radius.circular(8)),
     borderSide: BorderSide(
       color: Color.fromRGBO(41, 128, 185, 100)
     )
   );
 
   static const errorBorder = OutlineInputBorder(
-    borderRadius: BorderRadius.all(Radius.circular(8)),
     borderSide: BorderSide(
       color: Color.fromRGBO(231, 76, 60, 100)
     )
