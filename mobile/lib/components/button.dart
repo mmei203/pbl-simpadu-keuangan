@@ -3,13 +3,13 @@ import 'package:mobile/utils/config.dart';
 
 class Button extends StatelessWidget {
   const Button({
-    Key? key,
+    super.key,
     required this.width,
     required this.title,
     required this.disable,
     required this.onPressed,
     required this.padding,
-  }) : super(key: key);
+  });
 
   final double width;
   final String title;
@@ -24,6 +24,7 @@ class Button extends StatelessWidget {
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: Preset.primaryColor,
+          foregroundColor: Colors.white,
           padding: padding,
         ),
         onPressed: disable ? null : onPressed,
