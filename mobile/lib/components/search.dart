@@ -1,35 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-class CariMhs extends StatelessWidget {
-  final TextEditingController controller;
-  final VoidCallback onSearch;
+class Search extends StatelessWidget {
+  final TextEditingController? controller;
+  final VoidCallback? onSearch;
 
-  const CariMhs({super.key, required this.controller, required this.onSearch});
+  const Search({super.key, this.controller, this.onSearch});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: Colors.grey.shade400),
-      ),
+    return SizedBox(
+      width: 250,
       child: TextField(
         controller: controller,
-        onSubmitted: (_) => onSearch(),
+        onSubmitted: (_) => onSearch?.call(),
         textInputAction: TextInputAction.search,
         decoration: InputDecoration(
+          contentPadding: EdgeInsetsGeometry.symmetric(horizontal: 10),
+          isDense: true,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(50)),
           hint: Text(
             'Cari Mahasiswa ...',
-            style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+            style: TextStyle(color: Colors.grey),
           ),
-          contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-          border: InputBorder.none,
-          suffixIcon: IconButton(
-            onPressed: onSearch,
-            icon: FaIcon(FontAwesomeIcons.magnifyingGlass, size: 16,),
-            color: Colors.black54,
+          suffixIconColor: Colors.grey,
+          suffixIcon: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [FaIcon(FontAwesomeIcons.magnifyingGlass)],
           ),
         ),
       ),
