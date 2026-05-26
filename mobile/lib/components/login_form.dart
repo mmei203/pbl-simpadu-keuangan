@@ -53,7 +53,7 @@ class _LoginFormState extends State<LoginForm> {
       // Simpan ke provider
       context.read<UserProvider>().setLoggedInUser(user);
 
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacementNamed(context, 'home');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Email atau Password salah')),
