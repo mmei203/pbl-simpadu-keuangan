@@ -167,11 +167,12 @@ class _HomePageState extends State<HomePage> {
                                   SizedBox(
                                     width: itemWidth,
                                     child: MenuCard(
-                                      title: 'Beasiswa',
+                                      // ganti nama jd beasiswa
+                                      title: 'test crud',
                                       icon: FontAwesomeIcons.award,
                                       color: Color.fromRGBO(124, 58, 237, 1),
                                       onTap: () {
-                                        Navigator.pushNamed(context, 'beasiswa');
+                                        Navigator.pushNamed(context, 'test');
                                         print('Pindah ke halaman Beasiswa');
                                       },
                                     ),
@@ -185,7 +186,7 @@ class _HomePageState extends State<HomePage> {
                                       onTap: () {
                                         Navigator.pushNamed(
                                           context,
-                                          'statusmhs',
+                                          'status',
                                         );
                                         print('Pindah ke halaman status');
                                       },
