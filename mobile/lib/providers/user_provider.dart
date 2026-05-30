@@ -5,6 +5,8 @@ import 'package:mobile/services/user_service.dart';
 class UserProvider with ChangeNotifier {
   final UserService userService = UserService();
   bool isLoading = false;
+  bool _isLoginLoading = false;
+  bool get isLoginLoading => _isLoginLoading;
   UserResponse? _loggedInUser;
   UserResponse? get loggedInUser => _loggedInUser;
   List<UserResponse>? _data;
@@ -14,6 +16,23 @@ class UserProvider with ChangeNotifier {
   void setLoggedInUser(UserResponse user) {
     _loggedInUser = user;
     notifyListeners();
+  }
+
+  // Login function
+  Future<UserResponse?> login(UserRequests request) async {
+    _isLoginLoading = true;
+    notifyListeners();
+
+    try {
+      UserResponse? user = await userService.login(request);
+      _isLoginLoading = false;
+      notifyListeners();
+      return user;
+    } catch (e) {
+      _isLoginLoading = false;
+      notifyListeners();
+      return null;
+    }
   }
 
   Future<void> getAllUser() async {
