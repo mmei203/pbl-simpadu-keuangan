@@ -167,12 +167,11 @@ class _HomePageState extends State<HomePage> {
                                   SizedBox(
                                     width: itemWidth,
                                     child: MenuCard(
-                                      // ganti nama jd beasiswa
-                                      title: 'test crud',
+                                      title: 'Beasiswa',
                                       icon: FontAwesomeIcons.award,
                                       color: Color.fromRGBO(124, 58, 237, 1),
                                       onTap: () {
-                                        Navigator.pushNamed(context, 'test');
+                                        Navigator.pushNamed(context, 'beasiswa');
                                         print('Pindah ke halaman Beasiswa');
                                       },
                                     ),
