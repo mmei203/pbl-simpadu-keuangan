@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/screens/login_page.dart';
 import 'package:mobile/utils/config.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class Popup extends StatelessWidget {
   const Popup({super.key});
@@ -27,11 +26,7 @@ class Popup extends StatelessWidget {
                   ),
                 ),
                 onPressed: () {
-                  Future<void> _logout() async {
-                    final prefs = await SharedPreferences.getInstance();
-                    await prefs.remove('access_token');
-                  }
-
+                  // fungsi clear token blum yh ges
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(builder: (context) => LoginPage()),
