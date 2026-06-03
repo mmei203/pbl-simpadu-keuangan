@@ -4,6 +4,7 @@ import 'package:mobile/providers/user_provider.dart';
 import 'package:mobile/screens/home_page.dart';
 import 'package:mobile/screens/login_page.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:mobile/screens/page-edit/tambah_beasiswa_page.dart';
 import 'package:mobile/screens/page-edit/tambah_cicilan_page.dart';
 import 'package:mobile/screens/page-edit/ubah_beasiswa_page.dart';
 import 'package:mobile/screens/page-edit/ubah_cicilan_page.dart';
@@ -87,7 +88,8 @@ class _MyAppState extends State<MyApp> {
         'pembayaranform':(context) => const UbahPembayaranPage(),
         'ubahcicilanform':(context) => const UbahCicilanPage(),
         'cicilanform':(context) => const TambahCicilanPage(),
-        'beasiswaform':(context) => const UbahBeasiswaPage(),
+        'ubahbeasiswaform':(context) => const UbahBeasiswaPage(),
+        'beasiswaform':(context) => const TambahBeasiswaPage(),
       },
     );
   }
