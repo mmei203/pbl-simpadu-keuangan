@@ -36,19 +36,6 @@ class _PembayaranPageState extends State<PembayaranPage> {
           children: [
             // cari mahasiswa
             Search(),
-            ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pushNamed(context, 'pembayaranform');
-                  },
-                  label: Icon(Icons.add),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Preset.primaryColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadiusGeometry.circular(10),
-                    ),
-                  ),
-                ),
             Preset.smallSpace,
             // tabel
             // header tabel
