@@ -12,6 +12,7 @@ class Search extends StatelessWidget {
     return Flexible(
       child: SizedBox(
         width: 200,
+        height: 50,
         child: TextField(
           controller: controller,
           onSubmitted: (_) => onSearch!(),
