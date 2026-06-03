@@ -4,12 +4,17 @@ import 'package:mobile/components/search.dart';
 import 'package:mobile/components/tabel/header.dart';
 import 'package:mobile/utils/config.dart';
 
-class UktPage extends StatelessWidget {
-  const UktPage({super.key});
+class PembayaranPage extends StatefulWidget {
+  const PembayaranPage({super.key});
 
   @override
+  State<PembayaranPage> createState() => _PembayaranPageState();
+}
+
+class _PembayaranPageState extends State<PembayaranPage> {
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
+  return Scaffold(
       appBar: AppBar(
         // back button
         leading: IconButton(
@@ -19,7 +24,7 @@ class UktPage extends StatelessWidget {
           icon: FaIcon(FontAwesomeIcons.angleLeft),
         ),
         // title
-        title: Text('Kelola UKT'),
+        title: Text('Kelola Pembayaran'),
         elevation: 2,
         backgroundColor: Preset.primaryColor,
         foregroundColor: Colors.white,
@@ -31,12 +36,25 @@ class UktPage extends StatelessWidget {
           children: [
             // cari mahasiswa
             Search(),
+            ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pushNamed(context, 'pembayaranform');
+                  },
+                  label: Icon(Icons.add),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Preset.primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadiusGeometry.circular(10),
+                    ),
+                  ),
+                ),
             Preset.smallSpace,
             // tabel
             // header tabel
             HeaderTabel(label: 'Status'),
-
             // body tabel
+            
           ],
         ),
       ),

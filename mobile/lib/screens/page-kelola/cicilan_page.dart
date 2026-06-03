@@ -4,9 +4,14 @@ import 'package:mobile/components/search.dart';
 import 'package:mobile/components/tabel/header.dart';
 import 'package:mobile/utils/config.dart';
 
-class UktPage extends StatelessWidget {
-  const UktPage({super.key});
+class CicilanPage extends StatefulWidget {
+  const CicilanPage({super.key});
 
+  @override
+  State<CicilanPage> createState() => _CicilanPageState();
+}
+
+class _CicilanPageState extends State<CicilanPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -19,7 +24,7 @@ class UktPage extends StatelessWidget {
           icon: FaIcon(FontAwesomeIcons.angleLeft),
         ),
         // title
-        title: Text('Kelola UKT'),
+        title: Text('Kelola Status'),
         elevation: 2,
         backgroundColor: Preset.primaryColor,
         foregroundColor: Colors.white,
@@ -29,13 +34,26 @@ class UktPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // cari mahasiswa
-            Search(),
+            // cari mahasiswa & tambah
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              spacing: 10,
+              children: [
+                Search(),
+                ElevatedButton.icon(
+                  onPressed: () {},
+                  label: Icon(Icons.add),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Preset.primaryColor,
+                    foregroundColor: Preset.foregroundColor
+                  )
+                ),
+              ],
+            ),
             Preset.smallSpace,
             // tabel
             // header tabel
-            HeaderTabel(label: 'Status'),
-
+            HeaderTabel(label: 'Sisa Cicilan'),
             // body tabel
           ],
         ),

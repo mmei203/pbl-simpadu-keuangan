@@ -4,14 +4,14 @@ import 'package:mobile/components/search.dart';
 import 'package:mobile/components/tabel/header.dart';
 import 'package:mobile/utils/config.dart';
 
-class StatusPage extends StatefulWidget {
-  const StatusPage({super.key});
+class BeasiswaPage extends StatefulWidget {
+  const BeasiswaPage({super.key});
 
   @override
-  State<StatusPage> createState() => _StatusPageState();
+  State<BeasiswaPage> createState() => _BeasiswaPageState();
 }
 
-class _StatusPageState extends State<StatusPage> {
+class _BeasiswaPageState extends State<BeasiswaPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,7 +24,7 @@ class _StatusPageState extends State<StatusPage> {
           icon: FaIcon(FontAwesomeIcons.angleLeft),
         ),
         // title
-        title: Text('Kelola Status'),
+        title: Text('Kelola Beasiswa'),
         elevation: 2,
         backgroundColor: Preset.primaryColor,
         foregroundColor: Colors.white,
@@ -34,38 +34,31 @@ class _StatusPageState extends State<StatusPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // cari mahasiswa & dropdown
+            // cari mahasiswa & tambah
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               spacing: 10,
               children: [
                 Search(),
-                DropdownMenu(
-                  inputDecorationTheme: InputDecorationTheme(
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pushNamed(context, 'beasiswaform');
+                  },
+                  label: Icon(Icons.add),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Preset.primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadiusGeometry.circular(10),
                     ),
                   ),
-                  menuStyle: MenuStyle(
-                    shape: WidgetStateProperty.all(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
-                  ),
-                  hintText: 'Aktif',
-                  dropdownMenuEntries: [
-                    DropdownMenuEntry(value: 'aktif', label: 'Aktif'),
-                    DropdownMenuEntry(value: 'nonaktif', label: 'Nonaktif'),
-                  ],
                 ),
               ],
             ),
             Preset.smallSpace,
             // tabel
             // header tabel
-            HeaderTabel(label: 'Status'),
-
+            HeaderTabel(label: 'Beasiswa'),
             // body tabel
           ],
         ),
