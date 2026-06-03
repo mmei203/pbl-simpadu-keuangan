@@ -24,7 +24,7 @@ class _CicilanPageState extends State<CicilanPage> {
           icon: FaIcon(FontAwesomeIcons.angleLeft),
         ),
         // title
-        title: Text('Kelola Status'),
+        title: Text('Kelola Cicilan'),
         elevation: 2,
         backgroundColor: Preset.primaryColor,
         foregroundColor: Colors.white,
@@ -41,12 +41,14 @@ class _CicilanPageState extends State<CicilanPage> {
               children: [
                 Search(),
                 ElevatedButton.icon(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.pushNamed(context, 'cicilanform');
+                  },
                   label: Icon(Icons.add),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Preset.primaryColor,
-                    foregroundColor: Preset.foregroundColor
-                  )
+                    foregroundColor: Colors.white,
+                  ),
                 ),
               ],
             ),
