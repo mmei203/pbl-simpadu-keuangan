@@ -4,6 +4,16 @@ import 'package:mobile/providers/user_provider.dart';
 import 'package:mobile/screens/home_page.dart';
 import 'package:mobile/screens/login_page.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:mobile/screens/page-edit/tambah_cicilan_page.dart';
+import 'package:mobile/screens/page-edit/ubah_beasiswa_page.dart';
+import 'package:mobile/screens/page-edit/ubah_cicilan_page.dart';
+import 'package:mobile/screens/page-edit/ubah_pembayaran_page.dart';
+import 'package:mobile/screens/page-edit/ubah_status_page.dart';
+import 'package:mobile/screens/page-edit/ubah_ukt_page.dart';
+import 'package:mobile/screens/page-kelola/beasiswa_page.dart';
+import 'package:mobile/screens/page-kelola/cicilan_page.dart';
+import 'package:mobile/screens/page-kelola/pembayaran_page.dart';
+import 'package:mobile/screens/page-kelola/status_page.dart';
 import 'package:mobile/screens/page-kelola/ukt_page.dart';
 import 'package:mobile/screens/profile_page.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -67,6 +77,17 @@ class _MyAppState extends State<MyApp> {
         'home': (context) => const HomePage(),
         'profile': (context) => const ProfilePage(),
         'ukt': (context) => const UktPage(),
+        'status':(context) => const StatusPage(),
+        'beasiswa':(context) => const BeasiswaPage(),
+        'pembayaran':(context) => const PembayaranPage(),
+        'cicilan':(context) => const CicilanPage(),
+        // ubah
+        'uktform':(context) => const UbahUktPage(),
+        'statusform':(context) => const UbahStatusPage(),
+        'pembayaranform':(context) => const UbahPembayaranPage(),
+        'ubahcicilanform':(context) => const UbahCicilanPage(),
+        'cicilanform':(context) => const TambahCicilanPage(),
+        'beasiswaform':(context) => const UbahBeasiswaPage(),
       },
     );
   }
