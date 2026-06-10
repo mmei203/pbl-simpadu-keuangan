@@ -167,18 +167,6 @@ class _HomePageState extends State<HomePage> {
                                   SizedBox(
                                     width: itemWidth,
                                     child: MenuCard(
-                                      title: 'Beasiswa',
-                                      icon: FontAwesomeIcons.award,
-                                      color: Color.fromRGBO(124, 58, 237, 1),
-                                      onTap: () {
-                                        Navigator.pushNamed(context, 'beasiswa');
-                                        print('Pindah ke halaman Beasiswa');
-                                      },
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: itemWidth,
-                                    child: MenuCard(
                                       title: 'Status Mahasiswa',
                                       icon: FontAwesomeIcons.user,
                                       color: Color.fromRGBO(15, 118, 110, 1),
