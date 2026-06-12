@@ -16,6 +16,7 @@ class _UktPageState extends State<UktPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         leading: IconButton(
           onPressed: () => Navigator.of(context).pop(),
@@ -39,7 +40,7 @@ class _UktPageState extends State<UktPage> {
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF3F7FF),
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
