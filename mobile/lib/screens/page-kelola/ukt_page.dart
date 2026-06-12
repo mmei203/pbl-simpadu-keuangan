@@ -1,42 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:mobile/components/search.dart';
-import 'package:mobile/components/tabel/tabel_ukt.dart';
-import 'package:mobile/providers/mahasiswa_provider.dart';
 import 'package:mobile/utils/config.dart';
-import 'package:provider/provider.dart';
 
-class UktPage extends StatefulWidget {
+class UktPage extends StatelessWidget {
   const UktPage({super.key});
 
   @override
-  State<UktPage> createState() => _UktPageState();
-}
-
-class _UktPageState extends State<UktPage> {
-  final TextEditingController _searchController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    Future.microtask(
-      () => context.read<MahasiswaProvider>().fetchAllMahasiswa(),
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final mahasiswaProvider = context.watch<MahasiswaProvider>();
-
     return Scaffold(
       appBar: AppBar(
+        // back button
         leading: IconButton(
           onPressed: () {
             Navigator.of(context).pop();
           },
           icon: FaIcon(FontAwesomeIcons.angleLeft),
         ),
-        title: const Text('Kelola UKT'),
+        // title
+        title: Text('Kelola UKT'),
         elevation: 2,
         backgroundColor: Preset.primaryColor,
         foregroundColor: Colors.white,
@@ -46,33 +28,16 @@ class _UktPageState extends State<UktPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Search(
-              controller: _searchController,
-              onSearch: () {
-                final query = _searchController.text.trim().toLowerCase();
-                if (query.isEmpty) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Cari: $query')), 
-                );
-              },
-            ),
+            // cari mahasiswa
+            Search(),
             Preset.smallSpace,
-            Expanded(
-              child: TabelUkt(
-                mahasiswa: mahasiswaProvider.mahasiswa,
-                isLoading: mahasiswaProvider.isLoading,
-                onRefresh: () => mahasiswaProvider.fetchAllMahasiswa(),
-              ),
-            ),
+            // tabel
+            // header tabel
+
+            // body tabel
           ],
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
   }
 }

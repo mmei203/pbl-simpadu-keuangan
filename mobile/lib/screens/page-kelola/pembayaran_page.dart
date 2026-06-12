@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:mobile/components/search.dart';
-import 'package:mobile/providers/mahasiswa_provider.dart';
 import 'package:mobile/utils/config.dart';
-import 'package:provider/provider.dart';
 
 class PembayaranPage extends StatefulWidget {
   const PembayaranPage({super.key});
@@ -13,30 +11,19 @@ class PembayaranPage extends StatefulWidget {
 }
 
 class _PembayaranPageState extends State<PembayaranPage> {
-  final TextEditingController _searchController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    Future.microtask(
-      () => context.read<MahasiswaProvider>().fetchAllMahasiswa(),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final mahasiswaProvider = context.watch<MahasiswaProvider>();
-    final data = _filterMahasiswa(mahasiswaProvider.mahasiswa);
-
     return Scaffold(
       appBar: AppBar(
+        // back button
         leading: IconButton(
           onPressed: () {
             Navigator.of(context).pop();
           },
           icon: FaIcon(FontAwesomeIcons.angleLeft),
         ),
-        title: const Text('Kelola Pembayaran'),
+        // title
+        title: Text('Kelola Pembayaran'),
         elevation: 2,
         backgroundColor: Preset.primaryColor,
         foregroundColor: Colors.white,
@@ -46,124 +33,16 @@ class _PembayaranPageState extends State<PembayaranPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Search(
-              controller: _searchController,
-              onSearch: () {
-                setState(() {});
-              },
-            ),
+            // cari mahasiswa
+            Search(),
             Preset.smallSpace,
-            Expanded(
-              child: _buildTable(mahasiswaProvider, data),
-            ),
+            // tabel
+
+            // header tabel
+            // body tabel
           ],
         ),
       ),
     );
-  }
-
-  List<Map<String, dynamic>>? _filterMahasiswa(List<Map<String, dynamic>>? mahasiswa) {
-    if (mahasiswa == null) return null;
-    final query = _searchController.text.toLowerCase().trim();
-    if (query.isEmpty) return mahasiswa;
-
-    return mahasiswa.where((item) {
-      final nama = _readValue(item, ['nama', 'Nama', 'nama_mahasiswa']).toLowerCase();
-      final nim = _readValue(item, ['nim', 'NIM', 'mahasiswa_nim', 'npm']).toLowerCase();
-      final status = _normalizeStatus(_readValue(item, ['status', 'Status', 'status_bayar']));
-      return nama.contains(query) || nim.contains(query) || status.contains(query);
-    }).toList();
-  }
-
-  Widget _buildTable(MahasiswaProvider provider, List<Map<String, dynamic>>? data) {
-    if (provider.isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (data == null || data.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Tidak ada data mahasiswa.'),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () => provider.fetchAllMahasiswa(),
-              child: const Text('Muat ulang'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: DataTable(
-        columns: const [
-          DataColumn(label: Text('NIM')),
-          DataColumn(label: Text('Nama')),
-          DataColumn(label: Text('Jurusan')),
-          DataColumn(label: Text('Status')),
-          DataColumn(label: Text('Aksi')),
-        ],
-        rows: data.map((item) {
-          final statusLabel = _readValue(item, ['status', 'Status', 'status_bayar']);
-          final status = _normalizeStatus(statusLabel);
-          return DataRow(cells: [
-            DataCell(Text(_readValue(item, ['nim', 'NIM', 'mahasiswa_nim', 'npm']))),
-            DataCell(Text(_readValue(item, ['nama', 'Nama', 'nama_mahasiswa']))),
-            DataCell(Text(_readValue(item, ['jurusan', 'Jurusan', 'prodi']))),
-            DataCell(_buildStatusChip(status)),
-            DataCell(ElevatedButton(
-              onPressed: () {},
-              child: const Text('Detail', style: TextStyle(fontSize: 12)),
-            )),
-          ]);
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildStatusChip(String status) {
-    final color = switch (status) {
-      'lunas' => Preset.saveColor,
-      'cicilan' => Preset.editColor,
-      _ => Preset.errorColor,
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        status.isEmpty ? 'Tidak diketahui' : status.toUpperCase(),
-        style: TextStyle(color: color, fontWeight: FontWeight.w600),
-      ),
-    );
-  }
-
-  String _readValue(Map<String, dynamic> item, List<String> keys) {
-    for (final key in keys) {
-      final value = item[key];
-      if (value != null && value.toString().isNotEmpty) {
-        return value.toString();
-      }
-    }
-    return '';
-  }
-
-  String _normalizeStatus(String value) {
-    final lower = value.toLowerCase();
-    if (lower.contains('lunas') || lower.contains('paid')) return 'lunas';
-    if (lower.contains('cicilan') || lower.contains('installment') || lower.contains('install')) return 'cicilan';
-    if (lower.contains('belum')) return 'belum';
-    return lower;
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
   }
 }

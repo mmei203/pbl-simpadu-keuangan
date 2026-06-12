@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:mobile/components/search.dart';
-import 'package:mobile/components/tabel/header.dart';
 import 'package:mobile/utils/config.dart';
 
 class CicilanPage extends StatefulWidget {
@@ -55,7 +54,6 @@ class _CicilanPageState extends State<CicilanPage> {
             Preset.smallSpace,
             // tabel
             // header tabel
-            HeaderTabel(label: 'Sisa Cicilan'),
             // body tabel
           ],
         ),
