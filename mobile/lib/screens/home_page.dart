@@ -5,6 +5,7 @@ import 'package:mobile/components/menu_card.dart';
 import 'package:mobile/utils/config.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile/providers/user_provider.dart';
+import 'package:mobile/models/dummy_mahasiswa.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -17,6 +18,14 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<UserProvider>().loggedInUser;
+
+    int totalMahasiswa = dummyMahasiswa.length;
+
+    // Contoh filter pembagian status (Bisa disesuaikan dengan logic/field asli nanti)
+    int sudahBayar = dummyMahasiswa.where((m) => m.ukt == 'UKT 1').length;
+    int sedangMencicil = dummyMahasiswa.where((m) => m.ukt == 'UKT 2').length;
+    int belumBayar = dummyMahasiswa.where((m) => m.ukt == 'UKT 3').length;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Preset.primaryColor,
@@ -67,8 +76,8 @@ class _HomePageState extends State<HomePage> {
         decoration: BoxDecoration(
           image: DecorationImage(
             image: AssetImage('assets/bg_ukt.png'),
-            fit: BoxFit.cover
-          )
+            fit: BoxFit.cover,
+          ),
         ),
         child: ListView(
           children: [
@@ -90,7 +99,15 @@ class _HomePageState extends State<HomePage> {
                             children: [
                               Text(AppText.myText['welcome']!),
                               Text(
-                                user?.name.split(' ').map((w) => w[0].toUpperCase() + w.substring(1)).join(' ') ?? 'Admin',
+                                user?.name
+                                        .split(' ')
+                                        .map(
+                                          (w) =>
+                                              w[0].toUpperCase() +
+                                              w.substring(1),
+                                        )
+                                        .join(' ') ??
+                                    'Admin',
                                 style: GoogleFonts.poppins(
                                   fontSize: 25,
                                   fontWeight: FontWeight.w700,
@@ -101,10 +118,45 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       Preset.smallSpace,
-        
-                      // Card Mahasiswa (Tunggu API kelompok 3)
+
+                      // Card Mahasiswa
+                      GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 15,
+                        mainAxisSpacing: 15,
+                        childAspectRatio:
+                            1.4, // Rasio keidealan bentuk kotak card statistik
+                        children: [
+                          _buildStatCard(
+                            title: 'Total Mahasiswa',
+                            count: totalMahasiswa.toString(),
+                            backgroundColor: const Color(
+                              0xff1e3a8a,
+                            ), // Blue Navy
+                          ),
+                          _buildStatCard(
+                            title: 'Sudah Bayar',
+                            count: sudahBayar.toString(),
+                            backgroundColor: const Color(0xff10b981), // Green
+                          ),
+                          _buildStatCard(
+                            title: 'Sedang Mencicil',
+                            count: sedangMencicil.toString(),
+                            backgroundColor: const Color(
+                              0xfff59e0b,
+                            ), // Orange/Amber
+                          ),
+                          _buildStatCard(
+                            title: 'Belum Bayar',
+                            count: belumBayar.toString(),
+                            backgroundColor: const Color(0xffef4444), // Red
+                          ),
+                        ],
+                      ),
                       Preset.smallSpace,
-        
+
                       // Notifikasi
                       Container(
                         padding: EdgeInsets.all(15),
@@ -139,76 +191,54 @@ class _HomePageState extends State<HomePage> {
                           ],
                         ),
                       ),
-        
+
                       Preset.smallSpace,
-        
-                      // fitur Layanan
-                      LayoutBuilder(
-                        builder:
-                            (BuildContext context, BoxConstraints constraints) {
-                              double itemWidth = (constraints.maxWidth - 20) / 2;
-        
-                              return Wrap(
-                                spacing: 10,
-                                runSpacing: 10,
-                                children: [
-                                  SizedBox(
-                                    width: itemWidth,
-                                    child: MenuCard(
-                                      title: 'UKT',
-                                      icon: FontAwesomeIcons.creditCard,
-                                      color: Color.fromRGBO(37, 99, 235, 1),
-                                      onTap: () {
-                                        Navigator.pushNamed(context, 'ukt');
-                                        print('Pindah ke halaman UKT');
-                                      },
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: itemWidth,
-                                    child: MenuCard(
-                                      title: 'Status Mahasiswa',
-                                      icon: FontAwesomeIcons.user,
-                                      color: Color.fromRGBO(15, 118, 110, 1),
-                                      onTap: () {
-                                        Navigator.pushNamed(
-                                          context,
-                                          'status',
-                                        );
-                                        print('Pindah ke halaman status');
-                                      },
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: itemWidth,
-                                    child: MenuCard(
-                                      title: 'Penerimaan Pembayaran',
-                                      icon: FontAwesomeIcons.dollarSign,
-                                      color: Color.fromRGBO(22, 163, 74, 1),
-                                      onTap: () {
-                                        Navigator.pushNamed(
-                                          context,
-                                          'pembayaran',
-                                        );
-                                        print('Pindah ke halaman Pembayaran');
-                                      },
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: itemWidth,
-                                    child: MenuCard(
-                                      title: 'Cicilan',
-                                      icon: FontAwesomeIcons.clock,
-                                      color: Color.fromRGBO(234, 88, 12, 1),
-                                      onTap: () {
-                                        Navigator.pushNamed(context, 'cicilan');
-                                        print('Pindah ke halaman Cicilan');
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              );
+
+                      GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        childAspectRatio: 1.2,
+                        children: [
+                          MenuCard(
+                            title: 'UKT',
+                            icon: FontAwesomeIcons.creditCard,
+                            color: const Color.fromRGBO(37, 99, 235, 1),
+                            onTap: () {
+                              Navigator.pushNamed(context, 'ukt');
+                              print('Pindah ke halaman UKT');
                             },
+                          ),
+                          MenuCard(
+                            title: 'Status Mahasiswa',
+                            icon: FontAwesomeIcons.user,
+                            color: const Color.fromRGBO(15, 118, 110, 1),
+                            onTap: () {
+                              Navigator.pushNamed(context, 'status');
+                              print('Pindah ke halaman status');
+                            },
+                          ),
+                          MenuCard(
+                            title: 'Penerimaan Pembayaran',
+                            icon: FontAwesomeIcons.dollarSign,
+                            color: const Color.fromRGBO(22, 163, 74, 1),
+                            onTap: () {
+                              Navigator.pushNamed(context, 'pembayaran');
+                              print('Pindah ke halaman Pembayaran');
+                            },
+                          ),
+                          MenuCard(
+                            title: 'Cicilan',
+                            icon: FontAwesomeIcons.clock,
+                            color: const Color.fromRGBO(234, 88, 12, 1),
+                            onTap: () {
+                              Navigator.pushNamed(context, 'cicilan');
+                              print('Pindah ke halaman Cicilan');
+                            },
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -217,6 +247,54 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildStatCard({
+    required String title,
+    required String count,
+    required Color backgroundColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          Center(
+            child: Text(
+              count,
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontSize: 34,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(
+            height: 2,
+          ), // Memberikan sedikit padding bawah seimbang
+        ],
       ),
     );
   }
