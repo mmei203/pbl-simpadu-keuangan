@@ -2,8 +2,8 @@
   <div class="main-content">
     <header class="topbar">
       <div>
-        <p class="breadcrumb">Keuangan > Riwayat Pembayaran</p>
-        <h1>Data Pembayaran</h1>
+        <p class="breadcrumb">Keuangan > History Pembayaran Mahasiswa</p>
+        <h1>History Pembayaran Mahasiswa</h1>
         <p class="subtitle">Pantau transaksi masuk dan verifikasi pembayaran mahasiswa</p>
       </div>
 
@@ -76,7 +76,7 @@
                 </span>
               </td>
               <td>
-                <button class="btn-detail">
+                <button class="btn-detail" @click="openKonfirmasi(item)">
                   Lihat Bukti
                 </button>
               </td>
@@ -98,15 +98,103 @@
         </div>
       </div>
     </section>
+
+    <!-- Modal Konfirmasi Pembayaran -->
+    <div v-if="showModalKonfirmasi" class="modal-overlay"></div>
+    <div v-if="showModalKonfirmasi" class="modal-container">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="header-title">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="header-icon">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            <h2>Konfirmasi Pembayaran</h2>
+          </div>
+          <button @click="closeModal" class="close-btn">×</button>
+        </div>
+
+        <form @submit.prevent="saveKonfirmasi" class="modal-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label>NIM</label>
+              <input type="text" v-model="selectedPembayaran.nim" required />
+            </div>
+            <div class="form-group">
+              <label>Nama Mahasiswa</label>
+              <input type="text" v-model="selectedPembayaran.nama" required />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Total Tagihan</label>
+              <input type="text" v-model="selectedPembayaran.totalTagihan" required />
+            </div>
+            <div class="form-group">
+              <label>Jumlah Bayar</label>
+              <input type="text" v-model="selectedPembayaran.jumlahBayar" required />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Sisa Tagihan</label>
+              <input type="text" v-model="selectedPembayaran.sisaTagihan" required />
+            </div>
+            <div class="form-group">
+              <label>Metode pembayaran</label>
+              <select v-model="selectedPembayaran.metode" required>
+                <option value="BTN">BTN</option>
+                <option value="Transfer Bank">Transfer Bank</option>
+                <option value="VA">VA</option>
+                <option value="E-Wallet">E-Wallet</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tanggal</label>
+              <input type="date" v-model="selectedPembayaran.tanggal" required />
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select v-model="selectedPembayaran.status" required>
+                <option value="Berhasil">Berhasil</option>
+                <option value="Proses">Proses</option>
+                <option value="Gagal">Gagal</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-buttons">
+            <button type="button" @click="closeModal" class="btn-batal">Batal</button>
+            <button type="submit" class="btn-simpan">Simpan</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, reactive } from "vue";
 
 const search = ref("");
 const selectedMethod = ref("");
 const selectedStatus = ref("");
+const showModalKonfirmasi = ref(false);
+
+const selectedPembayaran = reactive({
+  nim: "",
+  nama: "",
+  totalTagihan: "",
+  jumlahBayar: "",
+  sisaTagihan: "",
+  metode: "BTN",
+  tanggal: "",
+  status: "Berhasil"
+});
 
 const tableData = ref([
   { id: "TX9901", nim: "C030324077", nama: "Budi Siregar", metode: "VA", nominal: "Rp 1.500.000", waktu: "12 Mei 2026, 09:45", status: "Berhasil" },
@@ -126,6 +214,36 @@ const filteredData = computed(() => {
     return matchesSearch && matchesMethod && matchesStatus;
   });
 });
+
+const openKonfirmasi = (item) => {
+  selectedPembayaran.nim = item.nim;
+  selectedPembayaran.nama = item.nama;
+  selectedPembayaran.totalTagihan = item.nominal;
+  selectedPembayaran.jumlahBayar = item.nominal;
+  selectedPembayaran.sisaTagihan = item.nominal;
+  selectedPembayaran.metode = item.metode;
+  selectedPembayaran.tanggal = "";
+  selectedPembayaran.status = item.status;
+  showModalKonfirmasi.value = true;
+};
+
+const closeModal = () => {
+  showModalKonfirmasi.value = false;
+  selectedPembayaran.nim = "";
+  selectedPembayaran.nama = "";
+  selectedPembayaran.totalTagihan = "";
+  selectedPembayaran.jumlahBayar = "";
+  selectedPembayaran.sisaTagihan = "";
+  selectedPembayaran.metode = "BTN";
+  selectedPembayaran.tanggal = "";
+  selectedPembayaran.status = "Berhasil";
+};
+
+const saveKonfirmasi = () => {
+  console.log("Konfirmasi Pembayaran Disimpan:", selectedPembayaran);
+  alert("Data konfirmasi pembayaran berhasil disimpan!");
+  closeModal();
+};
 </script>
 
 <style scoped>
@@ -232,4 +350,220 @@ const filteredData = computed(() => {
   background: white; cursor: pointer; font-size: 13px;
 }
 .control-btn.active { background: #1e3a8a; color: white; border-color: #1e3a8a; }
-</style>
+/* MODAL OVERLAY */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+}
+
+/* MODAL CONTAINER */
+.modal-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  animation: slideDown 0.3s ease-in-out;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translate(-50%, -60%);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, -50%);
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  width: 520px;
+  max-width: 90vw;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-icon {
+  width: 20px;
+  height: 20px;
+  color: #1e3a8a;
+}
+
+.modal-header h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  padding: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: #1e293b;
+}
+
+.modal-form {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.form-group input, .form-group select {
+  padding: 11px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: 'Poppins', sans-serif;
+  outline: none;
+  background-color: white;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus, .form-group select:focus {
+  border-color: #1e3a8a;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-wrapper input {
+  width: 100%;
+  padding-right: 40px;
+}
+
+.search-btn {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+
+.search-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.form-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 8px;
+}
+
+.btn-batal {
+  background-color: white;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  padding: 9px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.btn-batal:hover {
+  background-color: #f8fafc;
+  color: #1e293b;
+  border-color: #cbd5e1;
+}
+
+.btn-simpan {
+  background-color: #1e3a8a;
+  color: white;
+  border: none;
+  padding: 9px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background-color 0.2s;
+}
+
+.btn-simpan:hover {
+  background-color: #1e40af;
+}
+
+@media (max-width: 768px) {
+  .modal-content {
+    width: 90vw;
+    max-width: 450px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-form {
+    padding: 20px;
+  }
+
+  .modal-header {
+    padding: 18px 20px;
+  }
+}</style>

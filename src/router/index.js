@@ -3,10 +3,10 @@ import login from "../views/login.vue";
 import dashboard from "../views/dashboard.vue";
 import statusmahasiswa from "../views/statusmahasiswa.vue";
 import Ukt from "@/views/ukt.vue";
-import Beasiswa from "@/views/beasiswa.vue";
-import TambahBeasiswa from "@/views/tambahbeasiswa.vue";
 import Pembayaran from "@/views/pembayaran.vue";
 import Cicilan from "@/views/cicilan.vue";
+import TambahCicilan from "@/views/tambahcicilan.vue";
+import EditCicilan from "@/views/editcicilan.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -37,16 +37,6 @@ const router = createRouter({
       component: statusmahasiswa,
     },
     {
-      path: "/beasiswa",
-      name: "Beasiswa",
-      component: Beasiswa,
-    },
-    {
-      path: "/beasiswa/tambah",
-      name: "Tambah Beasiswa",
-      component: TambahBeasiswa,
-    },
-    {
       path: "/pembayaran",
       name: "Pembayaran",
       component:Pembayaran
@@ -55,7 +45,18 @@ const router = createRouter({
       path: "/cicilan",
       name: "Cicilan",
       component:Cicilan
-    }
+    },
+    {
+      path: "/cicilan/tambah/",
+      name: "Tambah Cicilan",
+      component: TambahCicilan
+    },
+    {
+      path: "/cicilan/edit/:nim",
+      name: "Edit Cicilan",
+      component: EditCicilan,
+      props: true
+    },
   ],
 });
 

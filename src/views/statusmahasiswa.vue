@@ -1,64 +1,62 @@
 <template>
   <div class="main-content">
-    <header class="topbar">
+    <header class="page-header">
       <div>
-        <p class="breadcrumb">Manajemen Keuangan > Status Mahasiswa</p>
-        <h1>Kelola Status</h1>
-        <p class="subtitle">Pantau dan kelola status aktifitas akademik mahasiswa</p>
-      </div>
-
-      <div class="profile-section">
-        <button class="notif-btn">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
-          </svg>
-        </button>
-        <div class="profile-blue">
-          <img src="https://i.pravatar.cc/100" alt="profile" />
-          <span>Admin Keuangan</span>
-        </div>
+        <p class="breadcrumbs">Manajemen Keuangan > Status Mahasiswa</p>
+        <h1>Status Mahasiswa</h1>
+        <p class="subtitle">Kelola Status Mahasiswa</p>
       </div>
     </header>
 
-    <section class="filter-card">
-      <div class="search-box">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="search-icon">
-          <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-        </svg>
-        <input type="text" v-model="search" placeholder="Cari Nama atau NIM..." />
-      </div>
-      
-      <div class="filter-group">
-        <select v-model="selectedJurusan">
-          <option value="">Semua Jurusan</option>
-          <option value="Elektro">Teknik Elektro</option>
-          <option value="Mesin">Teknik Mesin</option>
-          <option value="Sipil">Teknik Sipil</option>
-        </select>
-        <select v-model="selectedStatus">
-          <option value="">Semua Status</option>
-          <option value="Aktif">Aktif</option>
-          <option value="Nonaktif">Nonaktif</option>
-        </select>
-      </div>
-    </section>
+    <div class="table-container">
+      <div class="filter-action-bar">
+        <div class="search-box">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="search-icon">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.602 10.602Z" />
+          </svg>
+          <input 
+            type="text" 
+            v-model="search" 
+            @input="debounceSearch" 
+            placeholder="Cari Mahasiswa..." 
+          />
+        </div>
 
-    <EditData
-      :showEditModal="showEditModal"
-      :selectedData="selectedData"
-      @close="showEditModal = false"
-      @update="handleUpdate"
-    />
+        <div class="dropdown-group">
+          <select v-model="selectedJurusan" @change="fetchDataMahasiswa">
+            <option value="">Jurusan</option>
+            <option value="Elektro">Elektro</option>
+            <option value="Mesin">Mesin</option>
+            <option value="Sipil">Sipil</option>
+            <option value="Akuntansi">Akuntansi</option>
+            <option value="Bisnis">Bisnis</option>
+          </select>
 
-    <section class="table-card">
-      <div class="table-responsive">
-        <table class="data-table">
+          <select v-model="selectedProdi" @change="fetchDataMahasiswa">
+            <option value="">Prodi</option>
+            <option value="Teknik Informatika">Teknik Informatika</option>
+            <option value="Teknik Listrik">Teknik Listrik</option>
+            <option value="Teknik Mesin">Teknik Mesin</option>
+          </select>
+
+          <select v-model="selectedSemester" @change="fetchDataMahasiswa">
+            <option value="">Semester</option>
+            <option v-for="n in 8" :key="n" :value="n">{{ n }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div v-if="isLoading" class="state-message">Mengambil data mahasiswa dari server port 8874...</div>
+
+      <div v-else class="responsive-table">
+        <table>
           <thead>
             <tr>
               <th>No</th>
               <th>NIM</th>
-              <th>Nama Mahasiswa</th>
-              <th>Jurusan / Prodi</th>
+              <th>Nama</th>
+              <th>Jurusan</th>
+              <th>Prodi</th>
               <th>Semester</th>
               <th>Status</th>
               <th>Pembayaran</th>
@@ -66,213 +64,210 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(item, index) in filteredData" :key="item.nim">
-              <td>{{ index + 1 }}</td>
-              <td class="font-bold">{{ item.nim }}</td>
-              <td class="nama-mhs">{{ item.nama }}</td>
+            <tr v-for="(item, index) in tableData" :key="item.id || item.nim || index">
+              <td>{{ (currentPage - 1) * perPage + index + 1 }}</td>
+              <td class="font-semibold">{{ item.nim || item.NIM || '-' }}</td>
+              <td>{{ item.nama || item.NAMA || '-' }}</td>
+              <td>{{ item.jurusan || 'Elektro' }}</td>
+              <td>{{ item.prodi || 'Teknik Informatika' }}</td>
+              <td>{{ item.semester || item.smt || '4' }}</td>
               <td>
-                <div class="jurusan-text">{{ item.jurusan }}</div>
-                <div class="prodi-text">{{ item.prodi }}</div>
-              </td>
-              <td><span class="semester-badge">Smstr {{ item.semester }}</span></td>
-              <td>
-                <span class="badge status" :class="item.status.toLowerCase()">
-                  {{ item.status }}
+                <span class="badge" :class="statusClass(item.status || item.status_aktif)">
+                  {{ item.status || item.status_aktif || 'Aktif' }}
                 </span>
               </td>
               <td>
-                <span class="badge payment" :class="item.pay.toLowerCase()">
-                  {{ item.pay }}
+                <span class="badge" :class="pembayaranClass(item.status_pembayaran || item.pembayaran)">
+                  {{ item.status_pembayaran || item.pembayaran || 'Belum' }}
                 </span>
               </td>
               <td>
-                <button class="btn-edit" @click="openEdit(item)">
+                <button class="edit-btn" @click="openEditModal(item)">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                   </svg>
-                  Edit
                 </button>
               </td>
             </tr>
-            <tr v-if="filteredData.length === 0">
-              <td colspan="8" class="empty-state">Data tidak ditemukan</td>
+            <tr v-if="tableData.length === 0">
+              <td colspan="9" class="text-center py-4" style="color: #64748b; font-style: italic;">
+                Data mahasiswa Kosong Di Server.
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <div class="pagination">
-        <p>Menampilkan {{ filteredData.length }} dari {{ tableData.length }} data</p>
-        <div class="page-controls">
-          <button class="control-btn" disabled>&lt;</button>
-          <button class="control-btn active">1</button>
-          <button class="control-btn">2</button>
-          <button class="control-btn">&gt;</button>
+      <div class="pagination-bar" v-if="tableData.length > 0">
+        <button class="page-nav" :disabled="currentPage === 1" @click="changePage(currentPage - 1)">
+          &larr; Previous
+        </button>
+        <div class="page-numbers">
+          <button 
+            v-for="page in lastPage" 
+            :key="page" 
+            class="page-num" 
+            :class="{ active: page === currentPage }"
+            @click="changePage(page)"
+          >
+            {{ page }}
+          </button>
         </div>
+        <button class="page-nav" :disabled="currentPage === lastPage" @click="changePage(currentPage + 1)">
+          Next &rarr;
+        </button>
       </div>
-    </section>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
-import EditData from "./editmahasiswa.vue";
+import { ref, onMounted } from "vue";
+import axios from "../service/axios";
 
-const showEditModal = ref(false);
-const selectedData = ref(null);
+// --- State UI & Filter ---
 const search = ref("");
 const selectedJurusan = ref("");
-const selectedStatus = ref("");
+const selectedProdi = ref("");
+const selectedSemester = ref("");
 
-const openEdit = (item) => {
-  selectedData.value = { ...item };
-  showEditModal.value = true;
-};
+// --- State Data ---
+const tableData = ref([]);
+const isLoading = ref(false);
+const errorMessage = ref("");
+const currentPage = ref(1);
+const lastPage = ref(1);
+const perPage = ref(10);
+let searchTimeout = null;
 
-const handleUpdate = (updatedItem) => {
-  const index = tableData.value.findIndex((row) => row.nim === updatedItem.nim);
-  if (index !== -1) {
-    tableData.value[index] = { ...updatedItem };
+// Mengarah langsung ke API Master Mahasiswa Port 8874
+const BASE_URL = "https://api-keuangan-4a.akufarish.my.id:8873/api/keuangan-mahasiswa"; 
+
+const fetchDataMahasiswa = async () => {
+  isLoading.value = true;
+  errorMessage.value = "";
+  try {
+    const authToken = localStorage.getItem("token") || "";
+    const headers = {
+      'Accept': 'application/json',
+      ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+    };
+
+    // Menembak endpoint /mahasiswa dengan konfigurasi Header murni (Bearer Auth)
+    const response = await axios.get(`${BASE_URL}/mahasiswa`, {
+      headers,
+      params: {
+        page: currentPage.value,
+        search: search.value,
+        jurusan: selectedJurusan.value,
+        prodi: selectedProdi.value,
+        semester: selectedSemester.value
+      }
+    });
+
+    console.log("=== API 8874 MAHASISWA SUCCESS ===", response.data);
+    const resBody = response.data;
+
+    // Normalisasi pembacaan response data dari Laravel
+    if (resBody) {
+      if (Array.isArray(resBody)) {
+        tableData.value = resBody;
+        lastPage.value = 1;
+      } else if (resBody.data && resBody.data.data && Array.isArray(resBody.data.data)) {
+        tableData.value = resBody.data.data;
+        currentPage.value = resBody.data.current_page || 1;
+        lastPage.value = resBody.data.last_page || 1;
+        perPage.value = resBody.data.per_page || 10;
+      } else if (resBody.data && Array.isArray(resBody.data)) {
+        tableData.value = resBody.data;
+        lastPage.value = 1;
+      } else {
+        tableData.value = [];
+      }
+    } else {
+      tableData.value = [];
+    }
+  } catch (error) {
+    console.error("Detail Error Port 8874:", error);
+    
+    // Menampilkan pesan error asli dari response Laravel agar mudah di-debug
+    if (error.response && error.response.data) {
+      errorMessage.value = `Error Server (${error.response.status}): ${error.response.data.message || 'Token / Akses Ditolak'}`;
+    } else {
+      errorMessage.value = "Gagal terhubung ke API Master Mahasiswa (Port 8874). Periksa koneksi jaringan atau CORS.";
+    }
+  } finally {
+    isLoading.value = false;
   }
-  showEditModal.value = false;
-  selectedData.value = null;
 };
 
-const tableData = ref([
-  { nim: "C030324077", nama: "Budi Siregar", jurusan: "Elektro", prodi: "Teknik Informatika", semester: "4", status: "Aktif", pay: "Lunas" },
-  { nim: "C030324078", nama: "Siti Aminah", jurusan: "Elektro", prodi: "Teknik Informatika", semester: "4", status: "Nonaktif", pay: "Belum" },
-  { nim: "C030324079", nama: "Rudi Hartono", jurusan: "Mesin", prodi: "Teknik Mesin", semester: "4", status: "Aktif", pay: "Lunas" },
-  { nim: "C030324080", nama: "Desi Wulandari", jurusan: "Sipil", prodi: "Teknik Sipil", semester: "4", status: "Aktif", pay: "Lunas" },
-  { nim: "C030324081", nama: "Ahmad Fauzi", jurusan: "Elektro", prodi: "Teknik Informatika", semester: "4", status: "Nonaktif", pay: "Belum" },
-]);
+const debounceSearch = () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    currentPage.value = 1;
+    fetchDataMahasiswa();
+  }, 500);
+};
 
-const filteredData = computed(() => {
-  return tableData.value.filter((item) => {
-    const matchesSearch = search.value
-      ? (item.nim + item.nama).toLowerCase().includes(search.value.toLowerCase())
-      : true;
-    const matchesJurusan = selectedJurusan.value ? item.jurusan === selectedJurusan.value : true;
-    const matchesStatus = selectedStatus.value ? item.status === selectedStatus.value : true;
-    return matchesSearch && matchesJurusan && matchesStatus;
-  });
+const changePage = (page) => {
+  if (page >= 1 && page <= lastPage.value) {
+    currentPage.value = page;
+    fetchDataMahasiswa();
+  }
+};
+
+const statusClass = (status) => {
+  return String(status || '').toLowerCase() === 'nonaktif' ? 'badge-danger' : 'badge-primary';
+};
+
+const pembayaranClass = (statusBayar) => {
+  const b = String(statusBayar || '').toLowerCase();
+  if (b === 'lunas' || b === 'paid') return 'badge-success';
+  if (b === 'cicilan') return 'badge-warning';
+  return 'badge-danger';
+};
+
+const openEditModal = (item) => {
+  alert(`Detail Mahasiswa: ${item.nama || item.NAMA}`);
+};
+
+onMounted(() => {
+  fetchDataMahasiswa();
 });
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
-.main-content {
-  padding: 25px;
-  flex: 1;
-  font-family: 'Poppins', sans-serif;
-}
-
-/* TOPBAR STYLE */
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 25px;
-}
-.breadcrumb { font-size: 11px; color: #64748b; margin-bottom: 4px; }
-.topbar h1 { font-size: 24px; font-weight: 700; color: #1e293b; letter-spacing: -0.5px; }
-.subtitle { font-size: 13px; color: #64748b; }
-
-.profile-section { display: flex; align-items: center; gap: 15px; }
-.notif-btn {
-  background: white; border: 1px solid #e2e8f0; width: 40px; height: 40px;
-  border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-}
-.notif-btn svg { width: 20px; color: #64748b; }
-
-.profile-blue {
-  background: #1e3a8a; color: white; padding: 8px 18px;
-  border-radius: 12px; display: flex; align-items: center; gap: 12px; font-size: 13px; font-weight: 500;
-}
-.profile-blue img { width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); }
-
-/* FILTER CARD */
-.filter-card {
-  background: white; padding: 18px 20px; border-radius: 16px;
-  border: 1px solid #e2e8f0; display: flex; justify-content: space-between;
-  align-items: center; margin-bottom: 25px; gap: 20px;
-}
-.search-box { position: relative; flex: 1; max-width: 400px; }
-.search-icon {
-  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
-  width: 18px; color: #94a3b8;
-}
-.search-box input {
-  width: 100%; padding: 11px 15px 11px 42px; border: 1px solid #e2e8f0;
-  border-radius: 12px; outline: none; font-size: 13px; font-family: 'Poppins', sans-serif;
-}
-.search-box input:focus { border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59,130,246,0.08); }
-
-.filter-group { display: flex; gap: 12px; }
-.filter-group select {
-  padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 12px;
-  font-size: 13px; font-family: 'Poppins', sans-serif; background: #f8fafc; cursor: pointer; color: #475569;
-}
-.btn-add {
-  background: #1e3a8a; color: white; border: none; padding: 10px 22px;
-  border-radius: 12px; font-weight: 600; font-size: 13px; cursor: pointer;
-  display: flex; align-items: center; gap: 8px; transition: 0.3s;
-}
-.btn-add:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2); }
-
-/* TABLE STYLE */
-.table-card {
-  background: white; border-radius: 16px; border: 1px solid #e2e8f0;
-  overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-}
-.data-table { width: 100%; border-collapse: collapse; text-align: left; }
-.data-table th {
-  background: #f8fafc; padding: 16px; font-size: 12px;
-  text-transform: uppercase; color: #64748b; font-weight: 700;
-  border-bottom: 1px solid #e2e8f0; letter-spacing: 0.5px;
-}
-.data-table td { padding: 16px; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #334155; }
-.font-bold { font-weight: 700; color: #1e3a8a; }
-.nama-mhs { font-weight: 500; color: #1e293b; }
-
-.jurusan-text { font-weight: 600; font-size: 13px; }
-.prodi-text { font-size: 12px; color: #64748b; }
-
-.semester-badge {
-  background: #f1f5f9; color: #475569; padding: 5px 12px;
-  border-radius: 8px; font-size: 11px; font-weight: 600;
-}
-
-/* BADGES MODERN */
-.badge { padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; display: inline-block; }
-
-.status.aktif { background: #e0e7ff; color: #4338ca; }
-.status.nonaktif { background: #fee2e2; color: #b91c1c; }
-
-.payment.lunas { background: #f0fdf4; color: #15803d; border: 1px solid #dcfce7; }
-.payment.belum { background: #fff7ed; color: #9a3412; border: 1px solid #ffedd5; }
-
-.btn-edit {
-  background: white; border: 1px solid #e2e8f0; padding: 7px 14px;
-  border-radius: 10px; cursor: pointer; display: flex; align-items: center;
-  gap: 6px; font-size: 12px; font-family: 'Poppins', sans-serif; font-weight: 600; color: #64748b;
-}
-.btn-edit:hover { border-color: #3b82f6; color: #3b82f6; background: #eff6ff; }
-
-.empty-state { text-align: center; padding: 50px; color: #94a3b8; }
-
-/* PAGINATION */
-.pagination {
-  padding: 20px; display: flex; justify-content: space-between;
-  align-items: center; background: #f8fafc; border-top: 1px solid #e2e8f0;
-}
-.pagination p { font-size: 13px; color: #64748b; }
-.page-controls { display: flex; gap: 6px; }
-.control-btn {
-  width: 36px; height: 36px; display: flex; align-items: center;
-  justify-content: center; border-radius: 10px; border: 1px solid #e2e8f0;
-  background: white; cursor: pointer; font-size: 13px; transition: 0.2s;
-}
-.control-btn.active { background: #1e3a8a; color: white; border-color: #1e3a8a; font-weight: 600; }
-.control-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.main-content { padding: 24px; background: #f8fafc; min-height: 100vh; font-family: 'Poppins', sans-serif; }
+.breadcrumbs { font-size: 11px; color: #64748b; margin-bottom: 4px; }
+.page-header h1 { font-size: 24px; font-weight: 700; color: #1e293b; }
+.subtitle { font-size: 12px; color: #94a3b8; }
+.table-container { background: white; border-radius: 16px; border: 1px solid #e2e8f0; margin-top: 24px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+.filter-action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; }
+.search-box { position: relative; width: 300px; }
+.search-box input { width: 100%; padding: 9px 12px 9px 36px; border-radius: 10px; border: 1px solid #cbd5e1; outline: none; font-size: 13px; transition: 0.2s; }
+.search-box input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+.search-icon { width: 16px; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+.dropdown-group { display: flex; gap: 10px; }
+.dropdown-group select { padding: 9px 14px; border-radius: 10px; border: 1px solid #cbd5e1; font-size: 13px; color: #334155; background: #f8fafc; outline: none; cursor: pointer; }
+.responsive-table { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+th { background: #f1f5f9; color: #475569; padding: 14px; font-weight: 600; border-bottom: 2px solid #e2e8f0; }
+td { padding: 14px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }
+.font-semibold { font-weight: 600; color: #0f172a; }
+.badge { padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; text-align: center; min-width: 75px; }
+.badge-primary { background: #e0e7ff; color: #4f46e5; }
+.badge-success { background: #dcfce7; color: #15803d; }
+.badge-warning { background: #fef9c3; color: #a16207; }
+.badge-danger { background: #fee2e2; color: #b91c1c; }
+.edit-btn { background: none; border: 1px solid #cbd5e1; padding: 6px; border-radius: 8px; cursor: pointer; color: #4f46e5; display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; }
+.edit-btn:hover { background: #f1f5f9; border-color: #4f46e5; }
+.edit-btn svg { width: 16px; height: 16px; }
+.pagination-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #f1f5f9; }
+.page-nav { padding: 8px 14px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; font-size: 12px; font-weight: 500; cursor: pointer; color: #475569; }
+.page-nav:disabled { opacity: 0.5; cursor: not-allowed; }
+.page-numbers { display: flex; gap: 5px; }
+.page-num { width: 32px; height: 32px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #475569; }
+.page-num.active { background: #4f46e5; color: white; border-color: #4f46e5; }
+.state-message { text-align: center; padding: 40px; font-size: 13px; color: #64748b; }
+.state-message.error { color: #ef4444; font-weight: 500; }
 </style>

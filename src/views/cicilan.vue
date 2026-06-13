@@ -35,7 +35,7 @@
           <option value="Menunggak">Menunggak</option>
           <option value="Lunas">Lunas</option>
         </select>
-        <button class="btn-add">
+        <button class="btn-add" @click="openModal">
           <span>+</span> Pengajuan Cicilan
         </button>
       </div>
@@ -74,7 +74,7 @@
                 </span>
               </td>
               <td>
-                <button class="btn-action">Detail</button>
+                <button class="btn-action" @click="openDetail(item, index)">Detail</button>
               </td>
             </tr>
             <tr v-if="filteredData.length === 0">
@@ -93,23 +93,207 @@
         </div>
       </div>
     </section>
+
+    <!-- Modal Overlay -->
+    <div v-if="showModalTambah" class="modal-overlay"></div>
+
+    <!-- Modal Pop-up -->
+    <div v-if="showModalTambah" class="modal-container">
+      <div class="modal-content">
+        <!-- Header -->
+        <div class="modal-header">
+          <div class="header-title">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="header-icon">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            <h2>Tambah Data Cicilan</h2>
+          </div>
+          <button @click="closeModal" class="close-btn">×</button>
+        </div>
+
+        <!-- Form -->
+        <form @submit.prevent="saveCicilan" class="modal-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label>NIM</label>
+              <div class="input-wrapper">
+                <input 
+                  type="text" 
+                  v-model="newCicilan.nim" 
+                  placeholder="C030324077" 
+                  required 
+                />
+                <button type="button" class="search-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Nama Mahasiswa</label>
+              <input 
+                type="text" 
+                v-model="newCicilan.nama" 
+                placeholder="Budi Siregar"
+                required 
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nominal Potongan</label>
+              <input 
+                type="text" 
+                v-model="newCicilan.potongan" 
+                placeholder="100%" 
+                required 
+              />
+            </div>
+          </div>
+
+          <!-- Buttons -->
+          <div class="form-buttons">
+            <button type="button" @click="closeModal" class="btn-batal">Batal</button>
+            <button type="submit" class="btn-simpan">Simpan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Detail Cicilan Modal -->
+    <div v-if="showDetailModal" class="modal-overlay" @click.self="closeDetailModal"></div>
+    <div v-if="showDetailModal" class="modal-container">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="header-title">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="header-icon">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            <h2>Ubah Data Cicilan</h2>
+          </div>
+          <button @click="closeDetailModal" class="close-btn">×</button>
+        </div>
+        <form @submit.prevent="saveDetailChanges" class="modal-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label>NIM</label>
+              <input type="text" v-model="editCicilan.nim" readonly />
+            </div>
+            <div class="form-group">
+              <label>Nama Mahasiswa</label>
+              <input type="text" v-model="editCicilan.nama" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Total UKT</label>
+              <input type="text" v-model="editCicilan.total" required />
+            </div>
+            <div class="form-group">
+              <label>Sisa Tagihan</label>
+              <input type="text" v-model="editCicilan.sisa" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Jatuh Tempo</label>
+              <input type="text" v-model="editCicilan.tempo" required />
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select v-model="editCicilan.status" required>
+                <option value="Cicil">Cicil</option>
+                <option value="Menunggak">Menunggak</option>
+                <option value="Lunas">Lunas</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Cicilan ke</label>
+              <input type="text" v-model="editCicilan.tenor" required />
+            </div>
+          </div>
+          <div class="form-buttons">
+            <button type="button" class="btn-batal" @click="closeDetailModal">Batal</button>
+            <button type="submit" class="btn-simpan">Simpan Perubahan</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, reactive, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import axios from "axios"; // Import Axios
 
+const router = useRouter();
 const search = ref("");
 const selectedStatus = ref("");
+const showModalTambah = ref(false);
+const showDetailModal = ref(false);
 
-const tableData = ref([
-  { nim: "C030324001", nama: "Muhammad Riadin Zidan", total: "Rp 3.500.000", sisa: "Rp 1.750.000", tenor: "1 / 2", tempo: "15 Mei 2026", status: "Cicil" },
-  { nim: "C030324015", nama: "Nazar Fadilah", total: "Rp 3.500.000", sisa: "Rp 3.500.000", tenor: "0 / 2", tempo: "12 Mei 2026", status: "Menunggak" },
-  { nim: "C030324022", nama: "Aditya Rahman", total: "Rp 2.000.000", sisa: "Rp 0", tenor: "2 / 2", tempo: "-", status: "Lunas" },
-  { nim: "C030324056", nama: "Siti Rahmah", total: "Rp 3.500.000", sisa: "Rp 1.750.000", tenor: "1 / 2", tempo: "20 Mei 2026", status: "Cicil" },
-  { nim: "C030324090", nama: "Fajar Shidiq", total: "Rp 3.500.000", sisa: "Rp 3.500.000", tenor: "0 / 2", tempo: "10 Mei 2026", status: "Menunggak" },
-]);
+// State untuk menampung token Bearer dari dokumentasi API kamu
+const API_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // Masukkan token lengkapmu di sini
+const BASE_URL = "https://api-keuangan-4a.akufarish.my.id:8873/api/tagihan";
 
+// Konfigurasi Header untuk Auth
+const apiConfig = {
+  headers: {
+    'Accept': 'application/json',
+    'Authorization': `Bearer ${API_TOKEN}`
+  }
+};
+
+// State penampung data dari API
+const tableData = ref([]);
+
+const newCicilan = reactive({
+  nim: "",
+  nama: "",
+  potongan: ""
+});
+
+const editCicilan = reactive({
+  id: "", // Tambahkan ID untuk keperluan PUT/Update
+  nim: "",
+  nama: "",
+  total: "",
+  terbayar: "",
+  sisa: "",
+  tempo: "",
+  status: "",
+  tenor: ""
+});
+
+const selectedIndex = ref(-1);
+
+// ==========================================
+// 1. HIT API: GET DATA (tagihan.index)
+// ==========================================
+const fetchTagihan = async () => {
+  try {
+    const response = await axios.get(BASE_URL, apiConfig);
+    // Asumsi format response API: { success: true, data: [...] }
+    if (response.data && response.data.data) {
+      tableData.value = response.data.data;
+    }
+  } catch (error) {
+    console.error("Gagal mengambil data tagihan:", error);
+    alert("Gagal memuat data dari server.");
+  }
+};
+
+// Jalankan fungsi GET saat komponen pertama kali dibuka
+onMounted(() => {
+  fetchTagihan();
+});
+
+// Filter data (tetap berjalan di sisi client setelah data di-fetch)
 const filteredData = computed(() => {
   return tableData.value.filter((item) => {
     const matchesSearch = search.value
@@ -119,6 +303,107 @@ const filteredData = computed(() => {
     return matchesSearch && matchesStatus;
   });
 });
+
+// ==========================================
+// 2. HIT API: POST DATA (tagihan.store)
+// ==========================================
+const saveCicilan = async () => {
+  try {
+    // Sesuaikan payload object ini dengan struktur parameter yang diminta oleh API POST kamu
+    const payload = {
+      nim: newCicilan.nim,
+      nama: newCicilan.nama,
+      potongan: newCicilan.potongan
+    };
+
+    const response = await axios.post(BASE_URL, payload, apiConfig);
+    
+    if (response.status === 200 || response.status === 201) {
+      alert("Data cicilan berhasil ditambahkan ke server!");
+      closeModal();
+      fetchTagihan(); // Refresh tabel agar data baru muncul
+    }
+  } catch (error) {
+    console.error("Gagal menyimpan data:", error);
+    alert("Gagal menambahkan data cicilan.");
+  }
+};
+
+// ==========================================
+// 3. HIT API: PUT DATA (tagihan.update)
+// ==========================================
+const saveDetailChanges = async () => {
+  try {
+    // URL PUT biasanya membutuhkan ID di ujungnya, misal: /api/tagihan/1
+    const updateUrl = `${BASE_URL}/${editCicilan.id}`;
+    
+    const payload = {
+      nama: editCicilan.nama,
+      total: editCicilan.total,
+      sisa: editCicilan.sisa,
+      tempo: editCicilan.tempo,
+      status: editCicilan.status,
+      tenor: editCicilan.tenor
+    };
+
+    const response = await axios.put(updateUrl, payload, apiConfig);
+
+    if (response.status === 200) {
+      alert("Perubahan data cicilan berhasil disimpan di server!");
+      closeDetailModal();
+      fetchTagihan(); // Refresh tabel
+    }
+  } catch (error) {
+    console.error("Gagal memperbarui data:", error);
+    alert("Gagal memperbarui data cicilan.");
+  }
+};
+
+// Helper Format Tanggal (Sesuai kode lama kamu)
+const formatToDdMmYyyy = (value) => {
+  if (!value || value === "-") return "";
+  const normalized = value.trim();
+  const slashMatch = normalized.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (slashMatch) return `${slashMatch[1].padStart(2, "0")}/${slashMatch[2].padStart(2, "0")}/${slashMatch[3]}`;
+  
+  const monthNames = { januari: "01", februari: "02", maret: "03", april: "04", mei: "05", juni: "06", juli: "07", agustus: "08", september: "09", oktober: "10", november: "11", desember: "12" };
+  const parts = normalized.split(" ");
+  if (parts.length === 3) {
+    const [day, monthText, year] = parts;
+    const month = monthNames[monthText.toLowerCase()];
+    if (month) return `${day.padStart(2, "0")}/${month}/${year}`;
+  }
+  return normalized;
+};
+
+const openDetail = (item, index) => {
+  selectedIndex.value = index;
+  Object.assign(editCicilan, {
+    id: item.id || "", // Pastikan API mengembalikan field 'id'
+    nim: item.nim,
+    nama: item.nama,
+    total: item.total,
+    terbayar: item.terbayar || "",
+    sisa: item.sisa,
+    tempo: formatToDdMmYyyy(item.tempo),
+    status: item.status,
+    tenor: item.tenor
+  });
+  showDetailModal.value = true;
+};
+
+const closeDetailModal = () => {
+  showDetailModal.value = false;
+  selectedIndex.value = -1;
+};
+
+const openModal = () => { showModalTambah.value = true; };
+const closeModal = () => {
+  showModalTambah.value = false;
+  newCicilan.nim = "";
+  newCicilan.nama = "";
+  newCicilan.potongan = "";
+};
 </script>
 
 <style scoped>
@@ -175,4 +460,261 @@ const filteredData = computed(() => {
 .pagination p { font-size: 13px; color: #64748b; }
 .control-btn { width: 36px; height: 36px; border-radius: 10px; border: 1px solid #e2e8f0; background: white; cursor: pointer; margin-left: 5px; }
 .control-btn.active { background: #1e3a8a; color: white; border-color: #1e3a8a; }
+
+/* MODAL OVERLAY */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+}
+
+/* MODAL CONTAINER */
+.modal-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  animation: slideDown 0.3s ease-in-out;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translate(-50%, -60%);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, -50%);
+    opacity: 1;
+  }
+}
+
+/* MODAL CONTENT */
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  width: 520px;
+  max-width: 90vw;
+}
+
+/* MODAL HEADER */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-body {
+  padding: 24px;
+  display: grid;
+  gap: 16px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.detail-row span {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.detail-row strong {
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px 24px;
+}
+
+.header-icon {
+  width: 20px;
+  height: 20px;
+  color: #1e3a8a;
+}
+
+.modal-header h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  padding: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: #1e293b;
+}
+
+/* FORM */
+.modal-form {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.form-group input, .form-group select {
+  padding: 11px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: 'Poppins', sans-serif;
+  outline: none;
+  background-color: white;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus, .form-group select:focus {
+  border-color: #1e3a8a;
+}
+
+/* Search Input */
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-wrapper input {
+  width: 100%;
+  padding-right: 40px;
+}
+
+.search-btn {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+
+.search-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* BUTTONS */
+.form-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 8px;
+}
+
+.btn-batal {
+  background-color: white;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  padding: 9px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.btn-batal:hover {
+  background-color: #f8fafc;
+  color: #1e293b;
+  border-color: #cbd5e1;
+}
+
+.btn-simpan {
+  background-color: #1e3a8a;
+  color: white;
+  border: none;
+  padding: 9px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background-color 0.2s;
+}
+
+.btn-simpan:hover {
+  background-color: #1e40af;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 90vw;
+    max-width: 450px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-form {
+    padding: 20px;
+  }
+
+  .modal-header {
+    padding: 18px 20px;
+  }
+}
 </style>

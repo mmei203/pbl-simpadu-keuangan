@@ -25,17 +25,17 @@
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="search-icon">
           <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
         </svg>
-        <input type="text" v-model="search" placeholder="Cari Nama atau NIM..." />
+        <input type="text" v-model="search" @input="debounceSearch" placeholder="Cari Nama atau NIM..." />
       </div>
       
       <div class="filter-group">
-        <select v-model="selectedJurusan">
+        <select v-model="selectedJurusan" @change="fetchDataUkt">
           <option value="">Semua Jurusan</option>
           <option value="Elektro">Teknik Elektro</option>
           <option value="Mesin">Teknik Mesin</option>
           <option value="Sipil">Teknik Sipil</option>
         </select>
-        <select v-model="selectedSemester">
+        <select v-model="selectedSemester" @change="fetchDataUkt">
           <option value="">Semester</option>
           <option value="2">2</option>
           <option value="4">4</option>
@@ -53,7 +53,10 @@
 
     <section class="table-card">
       <div class="table-responsive">
-        <table class="data-table">
+        <div v-if="isLoading" class="empty-state">Memuat data dari server Laravel...</div>
+        <div v-else-if="errorMessage" class="empty-state error-text">{{ errorMessage }}</div>
+
+        <table v-else class="data-table">
           <thead>
             <tr>
               <th>No</th>
@@ -66,16 +69,16 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(item, index) in filteredData" :key="item.nim">
-              <td>{{ index + 1 }}</td>
-              <td class="font-bold">{{ item.nim }}</td>
-              <td class="nama-mhs">{{ item.nama }}</td>
+            <tr v-for="(item, index) in tableData" :key="item.nim || index">
+              <td>{{ (currentPage - 1) * perPage + index + 1 }}</td>
+              <td class="font-bold">{{ item.nim || item.NIM }}</td>
+              <td class="nama-mhs">{{ item.nama || item.NAMA }}</td>
               <td>
-                <div class="jurusan-text">{{ item.jurusan }}</div>
-                <div class="prodi-text">{{ item.prodi }}</div>
+                <div class="jurusan-text">{{ item.jurusan || item.JURUSAN }}</div>
+                <div class="prodi-text">{{ item.prodi || item.PRODI }}</div>
               </td>
-              <td><span class="semester-badge">Smstr {{ item.semester }}</span></td>
-              <td><span class="ukt-badge">{{ item.ukt }}</span></td>
+              <td><span class="semester-badge">Smstr {{ item.semester || item.SEMESTER }}</span></td>
+              <td><span class="ukt-badge">{{ item.ukt || item.GOLONGAN_UKT }}</span></td>
               <td>
                 <button class="btn-edit" @click="openEdit(item)">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -85,20 +88,19 @@
                 </button>
               </td>
             </tr>
-            <tr v-if="filteredData.length === 0">
+            <tr v-if="tableData.length === 0">
               <td colspan="7" class="empty-state">Data tidak ditemukan</td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <div class="pagination">
-        <p>Menampilkan {{ filteredData.length }} dari {{ tableData.length }} data</p>
+      <div class="pagination" v-if="!isLoading && !errorMessage && lastPage > 1">
+        <p>Halaman {{ currentPage }} dari {{ lastPage }}</p>
         <div class="page-controls">
-          <button class="control-btn" disabled>&lt;</button>
-          <button class="control-btn active">1</button>
-          <button class="control-btn">2</button>
-          <button class="control-btn">&gt;</button>
+          <button class="control-btn" @click="changePage(currentPage - 1)" :disabled="currentPage === 1">&lt;</button>
+          <button class="control-btn active">{{ currentPage }}</button>
+          <button class="control-btn" @click="changePage(currentPage + 1)" :disabled="currentPage === lastPage">&gt;</button>
         </div>
       </div>
     </section>
@@ -106,7 +108,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, onMounted } from "vue";
+import axios from "../service/axios";
 import EditUkt from "./editukt.vue";
 
 const showEditModal = ref(false);
@@ -115,37 +118,127 @@ const search = ref("");
 const selectedJurusan = ref("");
 const selectedSemester = ref("");
 
+// --- Laravel API States ---
+const tableData = ref([]);
+const isLoading = ref(false);
+const errorMessage = ref("");
+const currentPage = ref(1);
+const lastPage = ref(1);
+const perPage = ref(10);
+let searchTimeout = null;
+
+const BASE_URL = "https://api-keuangan-4a.akufarish.my.id:8873/api/kategori-ukt";
+// const AUTH_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"; // Token dari dokumentasimu
+const AUTH_TOKEN = localStorage.getItem("token")
+// --- FETCH DATA FROM LARAVEL ---
+const fetchDataUkt = async () => {
+  isLoading.value = true;
+  errorMessage.value = "";
+  try {
+    // Memastikan endpoint mengarah ke /api/keuangan-mahasiswa sesuai dokumentasi index
+    const response = await axios.get(`${BASE_URL}/keuangan-mahasiswa`, {
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${AUTH_TOKEN}`
+      },
+      params: {
+        page: currentPage.value,
+        search: search.value,
+        jurusan: selectedJurusan.value,
+        semester: selectedSemester.value
+      }
+    });
+
+    console.log("Response Full dari API Laravel:", response.data); // <-- Intip di Inspect Element -> Console
+
+    const resBody = response.data;
+
+    // Pengecekan fleksibel: jika API menggunakan standar API Resources atau langsung array
+    if (resBody && resBody.success) {
+      const mainData = resBody.data;
+      
+      if (mainData && mainData.data && Array.isArray(mainData.data)) {
+        // Jika backend menggunakan Pagination (LengthAwarePaginator)
+        tableData.value = mainData.data;
+        currentPage.value = mainData.current_page || 1;
+        lastPage.value = mainData.last_page || 1;
+        perPage.value = mainData.per_page || 10;
+      } else if (Array.isArray(mainData)) {
+        // Jika backend mengirimkan array biasa tanpa pagination wrapper
+        tableData.value = mainData;
+        lastPage.value = 1;
+      } else {
+        tableData.value = [];
+      }
+    } else if (Array.isArray(resBody)) {
+      tableData.value = resBody;
+    } else {
+      errorMessage.value = "Format respon data server tidak dikenali.";
+    }
+
+  } catch (error) {
+    console.error("Laravel API Error Detail:", error);
+    
+    // Memberikan pesan error spesifik berdasarkan respon server
+    if (error.response) {
+      // Server merespon dengan status code selain 2xx (misal 401, 404, 500)
+      errorMessage.value = `Error Server (${error.response.status}): ${error.response.data.message || 'Gagal mengambil data.'}`;
+    } else if (error.request) {
+      // Request dibuat tapi tidak ada respon sama sekali (Masalah CORS atau server mati)
+      errorMessage.value = "Tidak ada respon dari server. Periksa apakah server Laravel sudah jalan atau masalah CORS Origin.";
+    } else {
+      errorMessage.value = "Terjadi kesalahan setup pada request data.";
+    }
+  } finally {
+    isLoading.value = false;
+  }
+};
+// --- DEBOUNCE SEARCH ---
+const debounceSearch = () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    currentPage.value = 1; // Reset page ke awal setiap kali mencari
+    fetchDataUkt();
+  }, 500);
+};
+
+const changePage = (page) => {
+  if (page >= 1 && page <= lastPage.value) {
+    currentPage.value = page;
+    fetchDataUkt();
+  }
+};
+
 const openEdit = (item) => {
   selectedData.value = { ...item };
   showEditModal.value = true;
 };
 
-const handleUpdate = (updatedItem) => {
-  const index = tableData.value.findIndex((row) => row.nim === updatedItem.nim);
-  if (index !== -1) {
-    tableData.value[index] = { ...tableData.value[index], ...updatedItem };
+// --- UPDATE DATA TO LARAVEL ---
+const handleUpdate = async (updatedItem) => {
+  try {
+    // Hit ke endpoint update data milik Laravel, gunakan NIM/ID sebagai identifier route
+    const idKey = updatedItem.nim || updatedItem.NIM;
+    await axios.put(`${BASE_URL}/keuangan-mahasiswa/${idKey}`, updatedItem, {
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${AUTH_TOKEN}`
+      }
+    });
+    
+    alert("Data UKT Mahasiswa berhasil diperbarui!");
+    showEditModal.value = false;
+    selectedData.value = null;
+    fetchDataUkt(); // Refresh data tabel biar dapet data terbaru
+  } catch (error) {
+    console.error("Gagal mengupdate data:", error);
+    alert("Gagal memperbarui data ke server.");
   }
-  showEditModal.value = false;
-  selectedData.value = null;
 };
 
-const tableData = ref([
-  { nim: "C030324077", nama: "Budi Siregar", jurusan: "Elektro", prodi: "Teknik Informatika", semester: "4", ukt: "UKT 3" },
-  { nim: "C030324078", nama: "Siti Aminah", jurusan: "Elektro", prodi: "Teknik Informatika", semester: "4", ukt: "UKT 2" },
-  { nim: "C030324079", nama: "Rudi Hartono", jurusan: "Mesin", prodi: "Teknik Mesin", semester: "4", ukt: "UKT 1" },
-  { nim: "C030324080", nama: "Desi Wulandari", jurusan: "Sipil", prodi: "Teknik Sipil", semester: "4", ukt: "UKT 2" },
-  { nim: "C030324081", nama: "Ahmad Fauzi", jurusan: "Elektro", prodi: "Teknik Informatika", semester: "4", ukt: "UKT 5" },
-]);
-
-const filteredData = computed(() => {
-  return tableData.value.filter((item) => {
-    const matchesSearch = search.value
-      ? (item.nim + item.nama).toLowerCase().includes(search.value.toLowerCase())
-      : true;
-    const matchesJurusan = selectedJurusan.value ? item.jurusan === selectedJurusan.value : true;
-    const matchesSemester = selectedSemester.value ? item.semester === selectedSemester.value : true;
-    return matchesSearch && matchesJurusan && matchesSemester;
-  });
+// Panggil fungsi fetching data saat komponen pertama kali dirender
+onMounted(() => {
+  fetchDataUkt();
 });
 </script>
 
@@ -205,18 +298,13 @@ const filteredData = computed(() => {
   padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 12px;
   font-size: 13px; font-family: 'Poppins', sans-serif; outline: none; background: #f8fafc; cursor: pointer; color: #475569;
 }
-.btn-add {
-  background: #1e3a8a; color: white; border: none; padding: 10px 22px;
-  border-radius: 12px; font-weight: 600; font-size: 13px; font-family: 'Poppins', sans-serif; cursor: pointer;
-  display: flex; align-items: center; gap: 8px; transition: 0.3s;
-}
-.btn-add:hover { background: #152a61; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2); }
 
 /* TABLE STYLE */
 .table-card {
   background: white; border-radius: 16px; border: 1px solid #e2e8f0;
   overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.03);
 }
+.table-responsive { overflow-x: auto; }
 .data-table { width: 100%; border-collapse: collapse; text-align: left; }
 .data-table th {
   background: #f8fafc; padding: 16px; font-size: 12px;
@@ -248,6 +336,7 @@ const filteredData = computed(() => {
 .btn-edit:hover { border-color: #3b82f6; color: #3b82f6; background: #eff6ff; }
 
 .empty-state { text-align: center; padding: 50px; color: #94a3b8; font-size: 14px; }
+.error-text { color: #ef4444; }
 
 /* PAGINATION */
 .pagination {
