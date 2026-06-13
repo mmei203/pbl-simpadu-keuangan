@@ -4,10 +4,10 @@ import 'package:mobile/providers/user_provider.dart';
 import 'package:mobile/screens/home_page.dart';
 import 'package:mobile/screens/login_page.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:mobile/screens/notif_page.dart';
 import 'package:mobile/screens/page-edit/tambah_cicilan_page.dart';
 import 'package:mobile/screens/page-edit/ubah_pembayaran_page.dart';
 import 'package:mobile/screens/page-edit/ubah_status_page.dart';
-import 'package:mobile/screens/page-edit/ubah_ukt_page.dart';
 import 'package:mobile/screens/page-kelola/cicilan_page.dart';
 import 'package:mobile/screens/page-kelola/pembayaran_page.dart';
 import 'package:mobile/screens/page-kelola/status_page.dart';
@@ -31,7 +31,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider()),
       ],
-      child: MyApp(),
+      child: const MyApp(),
     ),
   );
 }
@@ -66,24 +66,22 @@ class _MyAppState extends State<MyApp> {
           focusColor: Preset.primaryColor,
           border: Preset.outlinedBorder,
           focusedBorder: Preset.focusBorder,
-        )
+        ),
       ),
 
-      // routes
       initialRoute: '/',
       routes: {
         '/': (context) => const LoginPage(),
         'home': (context) => const HomePage(),
         'profile': (context) => const ProfilePage(),
+        'notif': (context) => const HistoryPage(),
         'ukt': (context) => const UktPage(),
-        'status':(context) => const StatusPage(),
-        'pembayaran':(context) => const PembayaranPage(),
-        'cicilan':(context) => const CicilanPage(),
-        // ubah
-        'uktform':(context) => const UbahUktPage(),
-        'statusform':(context) => const UbahStatusPage(),
-        'pembayaranform':(context) => const UbahPembayaranPage(),
-        'cicilanform':(context) => const TambahCicilanPage(),
+        'status': (context) => const StatusPage(),
+        'pembayaran': (context) => const PembayaranPage(),
+        'cicilan': (context) => const CicilanPage(),
+        'statusform': (context) => const UbahStatusPage(),
+        'pembayaranform': (context) => const UbahPembayaranPage(),
+        'cicilanform': (context) => const TambahCicilanPage(),
       },
     );
   }

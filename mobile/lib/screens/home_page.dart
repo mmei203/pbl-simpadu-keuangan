@@ -21,7 +21,6 @@ class _HomePageState extends State<HomePage> {
 
     int totalMahasiswa = dummyMahasiswa.length;
 
-    // Contoh filter pembagian status (Bisa disesuaikan dengan logic/field asli nanti)
     int sudahBayar = dummyMahasiswa.where((m) => m.ukt == 'UKT 1').length;
     int sedangMencicil = dummyMahasiswa.where((m) => m.ukt == 'UKT 2').length;
     int belumBayar = dummyMahasiswa.where((m) => m.ukt == 'UKT 3').length;
@@ -54,8 +53,10 @@ class _HomePageState extends State<HomePage> {
             child: Row(
               children: [
                 IconButton(
-                  onPressed: () {},
-                  icon: Icon(Icons.notifications_outlined),
+                  onPressed: () {
+                    Navigator.pushNamed(context, 'notif');
+                  },
+                  icon: FaIcon(FontAwesomeIcons.clockRotateLeft, size: 24),
                   iconSize: 30,
                 ),
                 IconButton(
