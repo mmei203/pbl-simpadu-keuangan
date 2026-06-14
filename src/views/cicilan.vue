@@ -35,7 +35,7 @@
           <option value="Menunggak">Menunggak</option>
           <option value="Lunas">Lunas</option>
         </select>
-        <button class="btn-add" @click="openModal">
+        <button class="btn-add" @click="goToTambahCicilan">
           <span>+</span> Pengajuan Cicilan
         </button>
       </div>
@@ -237,8 +237,8 @@ const selectedStatus = ref("");
 const showModalTambah = ref(false);
 const showDetailModal = ref(false);
 
-// State untuk menampung token Bearer dari dokumentasi API kamu
-const API_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // Masukkan token lengkapmu di sini
+// State untuk menampung token Bearer dari localStorage
+const API_TOKEN = localStorage.getItem("token") || "";
 const BASE_URL = "https://api-keuangan-4a.akufarish.my.id:8873/api/tagihan";
 
 // Konfigurasi Header untuk Auth
@@ -398,6 +398,7 @@ const closeDetailModal = () => {
 };
 
 const openModal = () => { showModalTambah.value = true; };
+const goToTambahCicilan = () => { router.push("/cicilan/tambah/"); };
 const closeModal = () => {
   showModalTambah.value = false;
   newCicilan.nim = "";
