@@ -17,7 +17,6 @@ class _StatusPageState extends State<StatusPage> {
   @override
   void initState() {
     super.initState();
-    // Memanggil fetch data pertama kali saat halaman dibuka lewat Provider
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<StatusProvider>(
         context,
@@ -50,7 +49,6 @@ class _StatusPageState extends State<StatusPage> {
                 const Expanded(child: Search()),
                 const SizedBox(width: 10),
 
-                // Dropdown Filter Terikat dengan StatusProvider
                 Expanded(
                   child: Consumer<StatusProvider>(
                     builder: (context, provider, child) {
@@ -88,7 +86,6 @@ class _StatusPageState extends State<StatusPage> {
             ),
             Preset.smallSpace,
 
-            // --- HEADER TABEL ---
             Container(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
               decoration: BoxDecoration(
@@ -137,8 +134,6 @@ class _StatusPageState extends State<StatusPage> {
             ),
             const SizedBox(height: 10),
 
-            // --- BODY DATA TABEL MENGGUNAKAN CONSUMER ---
-            // 🎯 Pastikan bagian Consumer tabel kamu strukturnya persis seperti ini:
             Expanded(
               child: Consumer<StatusProvider>(
                 builder: (context, provider, child) {
@@ -146,7 +141,6 @@ class _StatusPageState extends State<StatusPage> {
                     return const Center(child: CircularProgressIndicator());
                   }
 
-                  // 🔥 KUNCI 1: Menggunakan provider.listMahasiswa untuk mendeteksi data kosong
                   if (provider.listMahasiswa.isEmpty) {
                     return const Center(
                       child: Text(
@@ -158,12 +152,10 @@ class _StatusPageState extends State<StatusPage> {
                   }
 
                   return ListView.separated(
-                    // 🔥 KUNCI 2: itemCount harus mengambil dari listMahasiswa yang sudah difilter
                     itemCount: provider.listMahasiswa.length,
                     separatorBuilder: (context, index) =>
                         const Divider(color: Colors.black12),
                     itemBuilder: (context, index) {
-                      // 🔥 KUNCI 3: Objek mhs diambil dari listMahasiswa
                       final mhs = provider.listMahasiswa[index];
                       final bool isAktif = mhs.ukt.toUpperCase() == 'AKTIF';
 
@@ -224,14 +216,10 @@ class _StatusPageState extends State<StatusPage> {
                                 ),
                               ),
                             ),
-                            // Tombol Aksi Edit
                             Expanded(
                               flex: 1,
                               child: IconButton(
-                                icon: const Icon(
-                                  Icons.edit_note,
-                                  color: Color(0xFF1A3D7C),
-                                ),
+                                icon: FaIcon(FontAwesomeIcons.penToSquare, color: Preset.primaryColor,),
                                 onPressed: () async {
                                   final result = await Navigator.push(
                                     context,

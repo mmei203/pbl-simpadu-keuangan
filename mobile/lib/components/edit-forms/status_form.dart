@@ -46,17 +46,15 @@ class _StatusFormState extends State<StatusForm> {
       _isLoading = true;
     });
 
-    // 1. Mengurai parameter dinamis (ID_KATEGORI, SEMESTER, BEASISWA) dari properti prodi
     List<String> ekstraParam = widget.mahasiswa.prodi.split('|');
     String idKategori = ekstraParam.isNotEmpty ? ekstraParam[0] : 'KAT001';
     String semester = ekstraParam.length > 1 ? ekstraParam[1] : '1';
     String beasiswa = ekstraParam.length > 2 ? ekstraParam[2] : 'TIDAK';
 
-    // 2. Panggil updateStatus dengan memetakan parameter secara akurat sesuai routing server
     bool isSuccess = await _statusService.updateStatus(
-      widget.mahasiswa.id,        // 🔥 Mengirimkan ID_KEUANGAN_MHS (contoh: KM001) ke Path Parameter URL
-      widget.mahasiswa.nim,       // 🔥 Mengirimkan ID_MAHASISWA (UUID) ke dalam Body JSON
-      _selectedStatus!,           // Status baru pilihan user ('AKTIF' / 'NONAKTIF')
+      widget.mahasiswa.id,
+      widget.mahasiswa.nim,
+      _selectedStatus!,
       idKategori: idKategori,
       semester: semester,
       beasiswa: beasiswa,
@@ -73,8 +71,6 @@ class _StatusFormState extends State<StatusForm> {
         backgroundColor: Colors.green,
       );
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
-      
-      // Memberitahu provider untuk memuat ulang data tabel utama secara instan
       Provider.of<StatusProvider>(context, listen: false).fetchStatusMahasiswa();
       
       Navigator.of(context).pop(true);
@@ -155,15 +151,12 @@ class _StatusFormState extends State<StatusForm> {
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.start,
-                    spacing: 15, // Jarak antar kelompok tombol aman (positif)
                     children: [
-                      // Pilihan: Aktif
                       Row(
                         children: [
                           Radio<String>(
                             value: 'AKTIF',
                             groupValue: _selectedStatus,
-                            // 🎯 TRICK: Menggunakan visualDensity negatif agar bulatan merapat ke teks tanpa crash!
                             visualDensity: const VisualDensity(
                               horizontal: VisualDensity.minimumDensity,
                               vertical: VisualDensity.minimumDensity,
@@ -176,7 +169,7 @@ class _StatusFormState extends State<StatusForm> {
                           ),
                           const SizedBox(
                             width: 4,
-                          ), // Jarak aman bulatan ke teks
+                          ),
                           const Text('Aktif'),
                         ],
                       ),

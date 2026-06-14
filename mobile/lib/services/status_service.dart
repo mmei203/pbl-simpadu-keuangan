@@ -5,24 +5,17 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class StatusService {
-  // Mengambil Base URL dari env
   final String? baseUrl = dotenv.env['URL_KEUANGAN'];
 
-  // =========================================================================
-  // 1. GET DATA MASAL (UNTUK TABEL UTAMA)
-  // =========================================================================
   Future<List<Mahasiswa>> getStatusMahasiswa() async {
     if (baseUrl == null) {
       throw Exception('Konfigurasi URL_KEUANGAN tidak ditemukan di file .env');
     }
 
-    // Membersihkan whitespace dan memastikan susunan slash URL rapi tanpa double slash
     String cleanUrl = baseUrl!.trim();
     if (cleanUrl.endsWith('/')) {
       cleanUrl = cleanUrl.substring(0, cleanUrl.length - 1);
     }
-
-    // Target endpoint sesuai dokumentasi API index massal
     final url = Uri.parse('$cleanUrl/keuangan-mahasiswa');
 
     try {
@@ -45,11 +38,9 @@ class StatusService {
       if (response.statusCode == 200) {
         final Map<String, dynamic> decodedData = json.decode(response.body);
 
-        // Sesuaikan jika data bersarang di dalam key 'data', atau langsung list massal
         final List<dynamic> dataMahasiswa = decodedData['data'] ?? [];
 
         return dataMahasiswa.map((jsonItem) {
-          // Memetakan field response backend ke objek Mahasiswa dengan presisi
           return Mahasiswa(
             id: jsonItem['ID_KEUANGAN_MHS']?.toString() ?? '',
             nim: jsonItem['ID_MAHASISWA']?.toString() ?? '',
@@ -59,20 +50,14 @@ class StatusService {
                 'Tanpa Nama',
             prodi: jsonItem['ID_KATEGORI']?.toString() ?? '',
 
-            // 🎯 NORMALISASI STATUS:
             ukt: () {
-              // Ambil nilai dari backend, ubah ke String, hapus spasi, dan jadikan huruf kapital
               final dbStatus =
                   jsonItem['STATUS_AKTIF']?.toString().trim().toUpperCase() ??
                   '';
 
-              // Jika nilainya murni 'AKTIF', kembalikan 'AKTIF'
               if (dbStatus == 'AKTIF') {
                 return 'AKTIF';
               }
-
-              // Jika nilainya selain 'AKTIF' (bisa 'NONAKTIF', 'nonaktif', null, atau kosong),
-              // paksa standarisasi menjadi 'NONAKTIF' agar lolos filter Provider
               return 'NONAKTIF';
             }(),
           );
@@ -88,9 +73,6 @@ class StatusService {
     }
   }
 
-  // =========================================================================
-  // 2. PUT UPDATE STATUS (UNTUK FORM EDIT)
-  // =========================================================================
   Future<bool> updateStatus(
     String idKeuangan,
     String idMahasiswa,
@@ -111,8 +93,6 @@ class StatusService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final String? token = prefs.getString('token');
-
-      // 🎯 PASTIKAN STATUS_AKTIF MENERIMA STRING UTUP (AKTIF / NONAKTIF)
       final Map<String, dynamic> bodyRequest = {
         "ID_KATEGORI": idKategori,
         "ID_MAHASISWA": idMahasiswa,
@@ -120,7 +100,7 @@ class StatusService {
         "BEASISWA": beasiswa,
         "STATUS_AKTIF": statusBaru
             .trim()
-            .toUpperCase(), // 🔥 Memaksa jadi KAPITAL murni
+            .toUpperCase(),
       };
 
       print('Mencoba PUT ke URL: $url');

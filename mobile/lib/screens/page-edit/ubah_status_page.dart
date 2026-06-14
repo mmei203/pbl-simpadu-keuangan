@@ -5,7 +5,6 @@ import 'package:mobile/models/mahasiswa.dart';
 import 'package:mobile/utils/config.dart';
 
 class UbahStatusPage extends StatelessWidget {
-  // 🎯 Terima langsung objek mahasiswa lewat konstruktor murni
   final Mahasiswa mahasiswa;
 
   const UbahStatusPage({super.key, required this.mahasiswa});
@@ -25,7 +24,6 @@ class UbahStatusPage extends StatelessWidget {
         backgroundColor: Preset.primaryColor,
         foregroundColor: Colors.white,
       ),
-      // Langsung oper ke StatusForm tanpa memanggil ModalRoute.of(context) lagi!
       body: SafeArea(
         child: StatusForm(mahasiswa: mahasiswa),
       ),
