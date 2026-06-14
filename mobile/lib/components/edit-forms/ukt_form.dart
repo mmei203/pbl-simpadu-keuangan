@@ -102,11 +102,11 @@ class _UktFormState extends State<UktForm> {
                       });
                     },
                     dropdownMenuEntries: const [
-                      DropdownMenuEntry(value: '1', label: 'UKT 1'),
-                      DropdownMenuEntry(value: '2', label: 'UKT 2'),
-                      DropdownMenuEntry(value: '3', label: 'UKT 3'),
-                      DropdownMenuEntry(value: '4', label: 'UKT 4'),
-                      DropdownMenuEntry(value: '5', label: 'UKT 5'),
+                      DropdownMenuEntry(value: 'Gol 1', label: 'Golongan 1'),
+                      DropdownMenuEntry(value: 'Gol 2', label: 'Golongan 2'),
+                      DropdownMenuEntry(value: 'Gol 3', label: 'Golongan 3'),
+                      DropdownMenuEntry(value: 'Gol 4', label: 'Golongan 4'),
+                      DropdownMenuEntry(value: 'Gol 5', label: 'Golongan 5'),
                     ],
                   ),
                 ],
