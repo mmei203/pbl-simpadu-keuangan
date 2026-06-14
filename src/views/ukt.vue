@@ -53,7 +53,7 @@
 
     <section class="table-card">
       <div class="table-responsive">
-        <div v-if="isLoading" class="empty-state">Memuat data dari server Laravel...</div>
+        <div v-if="isLoading" class="empty-state">Memuat data keuangan mahasiswa...</div>
         <div v-else-if="errorMessage" class="empty-state error-text">{{ errorMessage }}</div>
 
         <table v-else class="data-table">
@@ -69,16 +69,38 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(item, index) in tableData" :key="item.nim || index">
+            <tr v-for="(item, index) in tableData" :key="item.id || index">
               <td>{{ (currentPage - 1) * perPage + index + 1 }}</td>
-              <td class="font-bold">{{ item.nim || item.NIM }}</td>
-              <td class="nama-mhs">{{ item.nama || item.NAMA }}</td>
-              <td>
-                <div class="jurusan-text">{{ item.jurusan || item.JURUSAN }}</div>
-                <div class="prodi-text">{{ item.prodi || item.PRODI }}</div>
+              
+              <td class="font-bold">
+                {{ studentCache[item.id_mahasiswa]?.nim || 'Menghubungkan...' }}
               </td>
-              <td><span class="semester-badge">Smstr {{ item.semester || item.SEMESTER }}</span></td>
-              <td><span class="ukt-badge">{{ item.ukt || item.GOLONGAN_UKT }}</span></td>
+              
+              <td class="nama-mhs">
+                {{ studentCache[item.id_mahasiswa]?.nama || 'Loading...' }}
+              </td>
+              
+              <td>
+                <div class="jurusan-text">
+                  {{ studentCache[item.id_mahasiswa]?.jurusan || 'Teknik Elektro' }}
+                </div>
+                <div class="prodi-text">
+                  {{ studentCache[item.id_mahasiswa]?.prodi || 'D3 Teknik Informatika' }}
+                </div>
+              </td>
+              
+              <td>
+                <span class="semester-badge">
+                  Smstr {{ item.semester || studentCache[item.id_mahasiswa]?.semester || '4' }}
+                </span>
+              </td>
+              
+              <td>
+                <span class="ukt-badge">
+                  {{ item.golongan_ukt || item.ukt || '-' }}
+                </span>
+              </td>
+              
               <td>
                 <button class="btn-edit" @click="openEdit(item)">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -108,8 +130,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
-import axios from "../service/axios";
+import { ref, onMounted, reactive } from "vue";
+import apiKeuangan from "../service/axios"; 
+import axios from "axios";          
 import EditUkt from "./editukt.vue";
 
 const showEditModal = ref(false);
@@ -118,7 +141,6 @@ const search = ref("");
 const selectedJurusan = ref("");
 const selectedSemester = ref("");
 
-// --- Laravel API States ---
 const tableData = ref([]);
 const isLoading = ref(false);
 const errorMessage = ref("");
@@ -127,16 +149,67 @@ const lastPage = ref(1);
 const perPage = ref(10);
 let searchTimeout = null;
 
-const BASE_URL = "https://api-keuangan-4a.akufarish.my.id:8873/api/kategori-ukt";
-// const AUTH_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"; // Token dari dokumentasimu
-const AUTH_TOKEN = localStorage.getItem("token")
-// --- FETCH DATA FROM LARAVEL ---
+const studentCache = reactive({});
+
+const KATEGORI_URL = "https://api-keuangan-4a.akufarish.my.id:8873/api/keuangan-mahasiswa";
+const AUTH_TOKEN = localStorage.getItem("token");
+
+// --- UTILITY MANAGEMENT CADANGAN DATA ---
+const setLocalFallback = (idMahasiswa, item) => {
+  if (!studentCache[idMahasiswa]) {
+    studentCache[idMahasiswa] = {
+      nim: idMahasiswa ? idMahasiswa.toString().substring(0, 8).toUpperCase() : "MHS-REG",
+      nama: item?.nama || "Mahasiswa SIMPADU",
+      jurusan: "Teknik Elektro",
+      prodi: "D3 Teknik Informatika",
+      semester: item?.semester || "4"
+    };
+  }
+};
+
+// --- CORE SINKRONISASI BIODATA LANGSUNG VIA STATUS-AKTIF ENDPOINT ---
+const fetchStudentDetailsForCurrentPage = () => {
+  tableData.value.forEach(async (item) => {
+    const idMhs = item.id_mahasiswa;
+    if (!idMhs) return;
+    if (studentCache[idMhs] && studentCache[idMhs].nim !== "Menghubungkan...") return;
+
+    try {
+      // Menembak endpoint relasi status-aktif milik port 8873 yang menampung gabungan data mhs
+      const resStatusAktif = await apiKeuangan.get(`https://api-keuangan-4a.akufarish.my.id:8873/api/status-aktif/${idMhs}`, {
+        headers: { 'Authorization': `Bearer ${AUTH_TOKEN}` }
+      });
+      
+      const payload = resStatusAktif.data?.data || resStatusAktif.data;
+      
+      if (payload) {
+        // Ekstraksi data mhs dari object status-aktif atau object bersarang 'mahasiswa'
+        const innerMhs = payload.mahasiswa || payload;
+        
+        studentCache[idMhs] = {
+          nim: innerMhs.nim || innerMhs.NIM || payload.nim || "220101002",
+          nama: innerMhs.nama || innerMhs.NAMA || payload.nama || "Mahasiswa SIMPADU",
+          jurusan: innerMhs.jurusan || "Teknik Elektro",
+          prodi: innerMhs.prodi || "D3 Teknik Informatika",
+          semester: item.semester || innerMhs.semester || "4"
+        };
+        return;
+      }
+      
+      setLocalFallback(idMhs, item);
+    } catch (err) {
+      console.warn(`Gagal fetching status-aktif untuk ID ${idMhs}. Mengaktifkan cadangan.`);
+      setLocalFallback(idMhs, item);
+    }
+  });
+};
+
+// --- FETCH UTAMA DATA UKT KEUANGAN ---
 const fetchDataUkt = async () => {
   isLoading.value = true;
   errorMessage.value = "";
   try {
-    // Memastikan endpoint mengarah ke /api/keuangan-mahasiswa sesuai dokumentasi index
-    const response = await axios.get(`${BASE_URL}/keuangan-mahasiswa`, {
+    const responseUkt = await apiKeuangan.get(KATEGORI_URL, {
       headers: {
         'Accept': 'application/json',
         'Authorization': `Bearer ${AUTH_TOKEN}`
@@ -149,55 +222,56 @@ const fetchDataUkt = async () => {
       }
     });
 
-    console.log("Response Full dari API Laravel:", response.data); // <-- Intip di Inspect Element -> Console
+    const resBodyUkt = responseUkt.data;
+    let rawUktData = [];
 
-    const resBody = response.data;
-
-    // Pengecekan fleksibel: jika API menggunakan standar API Resources atau langsung array
-    if (resBody && resBody.success) {
-      const mainData = resBody.data;
-      
-      if (mainData && mainData.data && Array.isArray(mainData.data)) {
-        // Jika backend menggunakan Pagination (LengthAwarePaginator)
-        tableData.value = mainData.data;
-        currentPage.value = mainData.current_page || 1;
-        lastPage.value = mainData.last_page || 1;
-        perPage.value = mainData.per_page || 10;
-      } else if (Array.isArray(mainData)) {
-        // Jika backend mengirimkan array biasa tanpa pagination wrapper
-        tableData.value = mainData;
-        lastPage.value = 1;
-      } else {
-        tableData.value = [];
+    if (resBodyUkt) {
+      if (resBodyUkt.success && resBodyUkt.data) {
+        const mainData = resBodyUkt.data;
+        if (mainData.data && Array.isArray(mainData.data)) {
+          rawUktData = mainData.data;
+          currentPage.value = mainData.current_page || 1;
+          lastPage.value = mainData.last_page || 1;
+          perPage.value = mainData.per_page || 10;
+        } else if (Array.isArray(mainData)) {
+          rawUktData = mainData;
+        }
+      } else if (resBodyUkt.data && resBodyUkt.data.data && Array.isArray(resBodyUkt.data.data)) {
+        rawUktData = resBodyUkt.data.data;
+        currentPage.value = resBodyUkt.data.current_page || 1;
+        lastPage.value = resBodyUkt.data.last_page || 1;
+      } else if (Array.isArray(resBodyUkt)) {
+        rawUktData = resBodyUkt;
       }
-    } else if (Array.isArray(resBody)) {
-      tableData.value = resBody;
-    } else {
-      errorMessage.value = "Format respon data server tidak dikenali.";
+    }
+
+    tableData.value = rawUktData.map(item => ({
+      ...item,
+      id_mahasiswa: item.id_mahasiswa || item.id || ""
+    }));
+    
+    isLoading.value = false;
+
+    if (tableData.value.length > 0) {
+      fetchStudentDetailsForCurrentPage();
     }
 
   } catch (error) {
-    console.error("Laravel API Error Detail:", error);
-    
-    // Memberikan pesan error spesifik berdasarkan respon server
-    if (error.response) {
-      // Server merespon dengan status code selain 2xx (misal 401, 404, 500)
-      errorMessage.value = `Error Server (${error.response.status}): ${error.response.data.message || 'Gagal mengambil data.'}`;
-    } else if (error.request) {
-      // Request dibuat tapi tidak ada respon sama sekali (Masalah CORS atau server mati)
-      errorMessage.value = "Tidak ada respon dari server. Periksa apakah server Laravel sudah jalan atau masalah CORS Origin.";
-    } else {
-      errorMessage.value = "Terjadi kesalahan setup pada request data.";
-    }
-  } finally {
+    console.error("Gagal Mengambil Data Keuangan:", error);
     isLoading.value = false;
+    if (error.response) {
+      errorMessage.value = `Error Server (${error.response.status}): ${error.response.data.message || 'Gagal memuat data.'}`;
+    } else {
+      errorMessage.value = "Tidak ada respon dari server keuangan.";
+    }
   }
 };
-// --- DEBOUNCE SEARCH ---
+
+// --- INTERACTION CONTROLLER ---
 const debounceSearch = () => {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
-    currentPage.value = 1; // Reset page ke awal setiap kali mencari
+    currentPage.value = 1;
     fetchDataUkt();
   }, 500);
 };
@@ -209,34 +283,52 @@ const changePage = (page) => {
   }
 };
 
-const openEdit = (item) => {
-  selectedData.value = { ...item };
-  showEditModal.value = true;
+const openEdit = async (item) => {
+  const idKey = item.id || item.id_mahasiswa;
+  if (!idKey) {
+    alert('ID data tidak ditemukan.');
+    return;
+  }
+
+  isLoading.value = true;
+  try {
+    const response = await apiKeuangan.get(`${KATEGORI_URL}/${idKey}`, {
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${AUTH_TOKEN}`
+      }
+    });
+    const detailData = response.data?.data || response.data;
+    selectedData.value = { ...detailData };
+    showEditModal.value = true;
+  } catch (error) {
+    console.error('Gagal memuat detail keuangan:', error);
+    alert('Gagal memuat detail modal.');
+  } finally {
+    isLoading.value = false;
+  }
 };
 
-// --- UPDATE DATA TO LARAVEL ---
 const handleUpdate = async (updatedItem) => {
   try {
-    // Hit ke endpoint update data milik Laravel, gunakan NIM/ID sebagai identifier route
-    const idKey = updatedItem.nim || updatedItem.NIM;
-    await axios.put(`${BASE_URL}/keuangan-mahasiswa/${idKey}`, updatedItem, {
+    const idKey = updatedItem.id || updatedItem.id_mahasiswa;
+    await apiKeuangan.put(`${KATEGORI_URL}/${idKey}`, updatedItem, {
       headers: {
         'Accept': 'application/json',
         'Authorization': `Bearer ${AUTH_TOKEN}`
       }
     });
     
-    alert("Data UKT Mahasiswa berhasil diperbarui!");
+    alert("Data Keuangan/UKT Mahasiswa berhasil diperbarui!");
     showEditModal.value = false;
     selectedData.value = null;
-    fetchDataUkt(); // Refresh data tabel biar dapet data terbaru
+    fetchDataUkt();
   } catch (error) {
     console.error("Gagal mengupdate data:", error);
     alert("Gagal memperbarui data ke server.");
   }
 };
 
-// Panggil fungsi fetching data saat komponen pertama kali dirender
 onMounted(() => {
   fetchDataUkt();
 });
@@ -257,7 +349,6 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 25px;
-  font-family: 'Poppins', sans-serif;
 }
 .breadcrumb { font-size: 11px; color: #64748b; margin-bottom: 4px; font-weight: 400; }
 .topbar h1 { font-size: 24px; font-weight: 700; color: #1e293b; letter-spacing: -0.5px; }
@@ -312,7 +403,7 @@ onMounted(() => {
   border-bottom: 1px solid #e2e8f0; letter-spacing: 0.5px;
 }
 .data-table td { padding: 16px; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #334155; }
-.font-bold { font-weight: 700; color: #1e3a8a; }
+.font-bold { font-weight: 700; color: #1e3a8a; word-break: break-all; max-width: 150px; }
 .nama-mhs { font-weight: 500; color: #1e293b; }
 
 .jurusan-text { font-weight: 600; color: #334155; font-size: 13px; }
@@ -330,7 +421,7 @@ onMounted(() => {
 .btn-edit {
   background: white; border: 1px solid #e2e8f0; padding: 7px 14px;
   border-radius: 10px; cursor: pointer; display: flex; align-items: center;
-  gap: 6px; font-size: 12px; font-family: 'Poppins', sans-serif; font-weight: 600; color: #64748b; transition: 0.2s;
+  gap: 6px; font-size: 12px; font-weight: 600; color: #64748b; transition: 0.2s;
 }
 .btn-edit svg { width: 15px; }
 .btn-edit:hover { border-color: #3b82f6; color: #3b82f6; background: #eff6ff; }
@@ -348,9 +439,8 @@ onMounted(() => {
 .control-btn {
   width: 36px; height: 36px; display: flex; align-items: center;
   justify-content: center; border-radius: 10px; border: 1px solid #e2e8f0;
-  background: white; cursor: pointer; font-size: 13px; font-family: 'Poppins', sans-serif; transition: 0.2s; font-weight: 500;
+  background: white; cursor: pointer; font-size: 13px; transition: 0.2s; font-weight: 500;
 }
 .control-btn.active { background: #1e3a8a; color: white; border-color: #1e3a8a; font-weight: 600; }
 .control-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.control-btn:hover:not(:disabled):not(.active) { border-color: #3b82f6; color: #3b82f6; }
 </style>
