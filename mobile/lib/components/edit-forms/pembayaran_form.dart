@@ -1,237 +1,231 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/components/date_picker.dart';
-import 'package:mobile/components/detail_pembayaran.dart';
-import 'package:mobile/utils/config.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:mobile/models/tagihan.dart';
+import 'package:mobile/providers/pembayaran_provider.dart';
 
-class PembayaranForm extends StatelessWidget {
-  const PembayaranForm({super.key});
+class PembayaranForm extends StatefulWidget {
+  final TagihanModel tagihan;
+  const PembayaranForm({Key? key, required this.tagihan}) : super(key: key);
+
+  @override
+  State<PembayaranForm> createState() => _PembayaranFormState();
+}
+
+class _PembayaranFormState extends State<PembayaranForm> {
+  final _formKey = GlobalKey<FormState>();
+  bool _isSubmitting = false;
+
+  late DateTime _tanggalBayar;
+  late DateTime _jatuhTempo;
+
+  final _formatRupiah = NumberFormat.currency(
+    locale: 'id_ID',
+    symbol: 'Rp. ',
+    decimalDigits: 0,
+  );
+
+  final _formatTanggal = DateFormat('dd/MM/yyyy');
+
+  @override
+  void initState() {
+    super.initState();
+    _tanggalBayar = widget.tagihan.tglBayar != null
+        ? DateTime.tryParse(widget.tagihan.tglBayar!) ?? DateTime.now()
+        : DateTime.now();
+
+    _jatuhTempo = widget.tagihan.tglJatuhTempo != null
+        ? DateTime.tryParse(widget.tagihan.tglJatuhTempo!) ??
+            DateTime.now().add(const Duration(days: 30))
+        : DateTime.now().add(const Duration(days: 30));
+  }
+
+  Future<void> _pilihTanggal({required bool isJatuhTempo}) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: isJatuhTempo ? _jatuhTempo : _tanggalBayar,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+    );
+    if (picked != null) {
+      setState(() {
+        if (isJatuhTempo) {
+          _jatuhTempo = picked;
+        } else {
+          _tanggalBayar = picked;
+        }
+      });
+    }
+  }
+
+  Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final payload = {
+      'ID_TAGIHAN': widget.tagihan.id,
+      'ID_KEUANGAN_MHS': widget.tagihan.idKeuanganMhs,
+      'TOTAL_TAGIHAN': widget.tagihan.totalTagihan,
+      'STATUS_BAYAR': widget.tagihan.status,
+      'TGL_BAYAR': _tanggalBayar.toIso8601String(),
+      'TGL_JATUH_TEMPO': _jatuhTempo.toIso8601String(),
+    };
+
+    setState(() => _isSubmitting = true);
+
+    final provider = Provider.of<PembayaranProvider>(context, listen: false);
+    bool success = await provider.simpanPembayaran(widget.tagihan.id, payload);
+
+    setState(() => _isSubmitting = false);
+
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✅ Data pembayaran berhasil diperbarui!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      provider.fetchTagihan();
+      Navigator.of(context).pop(true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('❌ Gagal memperbarui data pembayaran.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  // Widget field read-only
+  Widget _readOnlyField(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: const TextStyle(fontSize: 13, color: Colors.black54)),
+        const SizedBox(height: 4),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEEF2FF),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(value,
+              style: const TextStyle(fontSize: 14, color: Colors.black87)),
+        ),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+
+  // Widget field tanggal
+  Widget _tanggalField(String label, DateTime value, bool isJatuhTempo) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: const TextStyle(fontSize: 13, color: Colors.black54)),
+        const SizedBox(height: 4),
+        InkWell(
+          onTap: () => _pilihTanggal(isJatuhTempo: isJatuhTempo),
+          child: Container(
+            width: double.infinity,
+            padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _formatTanggal.format(value),
+                  style: const TextStyle(fontSize: 14),
+                ),
+                const Icon(Icons.calendar_today,
+                    size: 18, color: Colors.black54),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Flexible(
-      child: Padding(
-        padding: EdgeInsets.all(20),
-        child: Form(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 20,
-            children: [
-              // NIM
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 3,
-                children: [
-                  Text('NIM'),
-                  TextField(
-                    decoration: InputDecoration(
-                      hintText: 'C030324000',
-                      hintStyle: TextStyle(color: Colors.grey.shade500),
-                      alignLabelWithHint: true,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+    final t = widget.tagihan;
 
-              // Nama
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 3,
-                children: [
-                  Text('Nama Mahasiswa'),
-                  TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Thom Yorke',
-                      hintStyle: TextStyle(color: Colors.grey.shade500),
-                      alignLabelWithHint: true,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // NIM (read only)
+          _readOnlyField('NIM', t.nim),
 
-              // total pembayaran
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 3,
-                children: [
-                  Text('Total Tagihan'),
-                  TextField(
-                    decoration: InputDecoration(
-                      prefixIcon: Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text('Rp. '),
-                      ),
-                      prefixIconConstraints: BoxConstraints(
-                        minWidth: 0,
-                        minHeight: 0,
-                      ),
-                      hintText: '1.000.000',
-                      hintStyle: TextStyle(color: Colors.grey.shade500),
-                      alignLabelWithHint: true,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+          // Nama Mahasiswa (read only)
+          _readOnlyField('Nama Mahasiswa', t.nama),
 
-              // jumlah bayar
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 3,
-                children: [
-                  Text('Jumlah Bayar'),
-                  TextField(
-                    decoration: InputDecoration(
-                      prefixIcon: Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text('Rp. '),
-                      ),
-                      prefixIconConstraints: BoxConstraints(
-                        minWidth: 0,
-                        minHeight: 0,
-                      ),
-                      hintText: '1.000.000',
-                      hintStyle: TextStyle(color: Colors.grey.shade500),
-                      alignLabelWithHint: true,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+          // Total UKT (read only)
+          _readOnlyField(
+              'Total UKT', _formatRupiah.format(t.totalTagihan)),
 
-              // sisa tagihan (pake operasi total tagihan - bayar = sisa bayar), READ-ONLY BIAR GABISA DI OTAK ATIK
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 3,
-                children: [
-                  Text('Total Tagihan'),
-                  TextField(
-                    readOnly: true,
-                    decoration: InputDecoration(
-                      prefixIcon: Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Text('Rp. '),
-                      ),
-                      prefixIconConstraints: BoxConstraints(
-                        minWidth: 0,
-                        minHeight: 0,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+          // Terbayar (read only)
+          _readOnlyField('Terbayar', _formatRupiah.format(t.terbayar)),
 
-              // Metode Pembayaran
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 3,
-                children: [
-                  Text('Metode Pembayaran'),
-                  DropdownMenu(
-                    width: double.infinity,
-                    inputDecorationTheme: InputDecorationTheme(
-                      alignLabelWithHint: false,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    menuStyle: MenuStyle(
-                      maximumSize: WidgetStateProperty.all(
-                        Size(250, double.infinity),
-                      ),
-                    ),
-                    hintText: 'Pilih Metode pembayaran',
-                    dropdownMenuEntries: [
-                      DropdownMenuEntry(value: 'bank_btn', label: 'BTN'),
-                    ],
-                  ),
-                ],
-              ),
+          // Sisa (read only)
+          _readOnlyField('Sisa', _formatRupiah.format(t.sisa)),
 
-              // Tanggal
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Tanggal'),
-                  TanggalPopup(),
-                ],
-              ),
+          // Cicilan ke (read only)
+          _readOnlyField(
+              'Cicilan ke', t.nomorCicilan?.toString() ?? '-'),
 
-              // Jatuh Tempo
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Jatuh Tempo'),
-                  TanggalPopup(),
-                ],
-              ),
+          // Tanggal (editable)
+          _tanggalField('Tanggal', _tanggalBayar, false),
 
-              // Status
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 3,
-                children: [
-                  Text('Status Pembayaran'),
-                  DropdownMenu(
-                    width: double.infinity,
-                    inputDecorationTheme: InputDecorationTheme(
-                      alignLabelWithHint: false,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    menuStyle: MenuStyle(
-                      maximumSize: WidgetStateProperty.all(
-                        Size(250, double.infinity),
-                      ),
-                    ),
-                    hintText: 'Berhasil / Pending',
-                    dropdownMenuEntries: [
-                      DropdownMenuEntry(value: 'berhasil', label: 'Berhasil'),
-                      DropdownMenuEntry(value: 'pending', label: 'Pending'),
-                    ],
-                  ),
-                ],
-              ),
+          // Jatuh Tempo (editable)
+          _tanggalField('Jatuh tempo', _jatuhTempo, true),
 
-              // button
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Preset.primaryColor,
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return DetailPembayaran();
-                    },
-                  );
-                },
-                child: Text(
-                  'Simpan',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          const SizedBox(height: 12),
+
+          // Tombol Simpan
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton(
+              onPressed: _isSubmitting ? null : _submitForm,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
-            ],
+              child: _isSubmitting
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Text(
+                      'Simpan',
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

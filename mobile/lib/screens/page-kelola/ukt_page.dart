@@ -46,19 +46,22 @@ class _UktPageState extends State<UktPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.only(left: 15, right: 15, top: 20, bottom: 15),
+                padding: const EdgeInsets.only(
+                  left: 15,
+                  right: 15,
+                  top: 20,
+                  bottom: 15,
+                ),
                 child: const Search(),
               ),
-              
+
               // 4. Gunakan Consumer untuk memantau perubahan data di UktProvider
               Expanded(
                 child: Consumer<UktProvider>(
                   builder: (context, uktProvider, child) {
                     // KONDISI LOADING
                     if (uktProvider.isLoading) {
-                      return const Center(
-                        child: CircularProgressIndicator(),
-                      );
+                      return const Center(child: CircularProgressIndicator());
                     }
 
                     // KONDISI ERROR
@@ -81,7 +84,11 @@ class _UktPageState extends State<UktPage> {
 
                     // KONDISI BERHASIL (TAMPILKAN TABEL)
                     return Container(
-                      margin: const EdgeInsets.only(left: 15, right: 15, bottom: 20),
+                      margin: const EdgeInsets.only(
+                        left: 15,
+                        right: 15,
+                        bottom: 20,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
@@ -100,64 +107,168 @@ class _UktPageState extends State<UktPage> {
                             // HEADER TABEL
                             Container(
                               color: const Color(0xFFD2E4FF),
-                              padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 15,
+                                horizontal: 10,
+                              ),
                               child: const Row(
                                 children: [
-                                  Expanded(flex: 3, child: Text('NIM', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
-                                  Expanded(flex: 2, child: Text('Nama', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
-                                  Expanded(flex: 4, child: Text('Prodi', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
-                                  Expanded(flex: 2, child: Text('UKT', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
-                                  Expanded(flex: 2, child: Text('Aksi', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
+                                  Expanded(
+                                    flex: 3,
+                                    child: Text(
+                                      'NIM',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    flex: 3,
+                                    child: Text(
+                                      'Nama',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    flex: 3,
+                                    child: Text(
+                                      'Prodi',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    flex: 2,
+                                    child: Text(
+                                      'UKT',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    flex: 2,
+                                    child: Text(
+                                      'Aksi',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
-                      
+
                             // BODY DATA TABEL
                             Expanded(
                               child: ListView.builder(
-                                padding: EdgeInsets.zero, 
+                                padding: EdgeInsets.zero,
                                 shrinkWrap: false,
                                 physics: const AlwaysScrollableScrollPhysics(),
                                 itemCount: uktProvider.listMahasiswa.length,
                                 itemBuilder: (context, index) {
                                   final mhs = uktProvider.listMahasiswa[index];
                                   return Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                      horizontal: 10,
+                                    ),
                                     decoration: const BoxDecoration(
-                                      border: Border(bottom: BorderSide(color: Color(0xFFE5EDFA), width: 1)),
+                                      border: Border(
+                                        bottom: BorderSide(
+                                          color: Color(0xFFE5EDFA),
+                                          width: 1,
+                                        ),
+                                      ),
                                     ),
                                     child: Row(
-                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
                                       children: [
-                                        Expanded(flex: 3, child: Text(mhs.nim, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-                                        Expanded(flex: 2, child: Text(mhs.nama, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                                        // NIM - Diubah ke flex: 3 (Sesuai Header)
                                         Expanded(
-                                          flex: 4, 
+                                          flex: 3,
                                           child: Text(
-                                            mhs.prodi.length > 13 ? '${mhs.prodi.substring(0, 13)}..' : mhs.prodi,
-                                            textAlign: TextAlign.center,
-                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                                            overflow: TextOverflow.ellipsis,
-                                          )
+                                            mhs.nim,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                            ),
+                                          ),
                                         ),
-                                        Expanded(flex: 2, child: Text(mhs.ukt, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                                        // NAMA - Diubah ke flex: 3 (Sesuai Header) agar tidak terpotong sempit
+                                        Expanded(
+                                          flex: 3,
+                                          child: Text(
+                                            mhs.nama,
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                        // PRODI - Diubah ke flex: 3 (Sesuai Header)
+                                        Expanded(
+                                          flex: 3,
+                                          child: Text(
+                                            mhs.prodi.length > 13
+                                                ? '${mhs.prodi.substring(0, 13)}..'
+                                                : mhs.prodi,
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        // UKT - Tetap flex: 2 (Sesuai Header)
+                                        Expanded(
+                                          flex: 2,
+                                          child: Text(
+                                            mhs.ukt,
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                        // AKSI - Tetap flex: 2 (Sesuai Header)
                                         Expanded(
                                           flex: 2,
                                           child: Center(
                                             child: InkWell(
                                               onTap: () async {
-                                                final result = await Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (context) => UbahUktPage(mahasiswa: mhs),
-                                                  ),
-                                                );
-                                                // Jika sukses edit data, panggil fetch ulang lewat provider tanpa setState manual
+                                                final result =
+                                                    await Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            UbahUktPage(
+                                                              mahasiswa: mhs,
+                                                            ),
+                                                      ),
+                                                    );
                                                 if (result == true) {
-                                                  uktProvider.fetchAllMahasiswa();
+                                                  uktProvider
+                                                      .fetchAllMahasiswa();
                                                 }
                                               },
-                                              child: FaIcon(FontAwesomeIcons.penToSquare, color: Preset.primaryColor, size: 20),
+                                              child: FaIcon(
+                                                FontAwesomeIcons.penToSquare,
+                                                color: Preset.primaryColor,
+                                                size: 20,
+                                              ),
                                             ),
                                           ),
                                         ),

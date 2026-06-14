@@ -24,8 +24,8 @@ class _UktFormState extends State<UktForm> {
     _nimController = TextEditingController(text: widget.mahasiswa.nim);
     _namaController = TextEditingController(text: widget.mahasiswa.nama);
 
-    String currentUkt = widget.mahasiswa.ukt.replaceAll(' ', '_').toLowerCase();
-    _selectedUkt = currentUkt;
+    // FIX: Samakan format dengan nilai di dropdown menu entries ("Gol 1", "Gol 2", dst)
+    _selectedUkt = widget.mahasiswa.ukt;
   }
 
   @override
@@ -102,17 +102,20 @@ class _UktFormState extends State<UktForm> {
                       });
                     },
                     dropdownMenuEntries: const [
-                      DropdownMenuEntry(value: 'Gol 1', label: 'Golongan 1'),
-                      DropdownMenuEntry(value: 'Gol 2', label: 'Golongan 2'),
-                      DropdownMenuEntry(value: 'Gol 3', label: 'Golongan 3'),
-                      DropdownMenuEntry(value: 'Gol 4', label: 'Golongan 4'),
-                      DropdownMenuEntry(value: 'Gol 5', label: 'Golongan 5'),
+                      DropdownMenuEntry(value: 'KAT056', label: 'Golongan 1'),
+                      DropdownMenuEntry(value: 'KAT057', label: 'Golongan 2'),
+                      DropdownMenuEntry(
+                        value: 'KAT058',
+                        label: 'Golongan 3',
+                      ), // Sesuaikan kodenya dengan database API kamu
+                      DropdownMenuEntry(value: 'KAT059', label: 'Golongan 4'),
+                      DropdownMenuEntry(value: 'KAT060', label: 'Golongan 5'),
                     ],
                   ),
                 ],
               ),
 
-              // Button Simpan (PERBAIKAN LOGIKA DI SINI)
+              // Button Simpan
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Preset.primaryColor,
@@ -135,21 +138,22 @@ class _UktFormState extends State<UktForm> {
                           const Center(child: CircularProgressIndicator()),
                     );
 
-                    // 2. Paket 'provider' dan 'ukt_provider' sekarang DIGUNAKAN (Warning 2 & 3 Hilang)
                     final uktProvider = Provider.of<UktProvider>(
                       context,
                       listen: false,
                     );
-                    final IsBerhasil = await uktProvider.updateUktMahasiswa(
-                      widget
-                          .mahasiswa, // 🎯 Kirim objek mahasiswa utuh, bukan cuma .nim
-                      _selectedUkt!, // Kirim ID Kategori baru dari dropdown
+
+                    // FIX: Mengubah pemanggilan metode sesuai nama fungsi di Provider (updateMahasiswaUkt)
+                    // serta mengirimkan parameter id utama dan nilai ukt barunya
+                    final isBerhasil = await uktProvider.updateMahasiswaUkt(
+                      widget.mahasiswa.id,
+                      _selectedUkt!,
                     );
 
                     // Tutup loading dialog setelah proses asinkronus selesai
                     if (context.mounted) Navigator.of(context).pop();
 
-                    if (IsBerhasil) {
+                    if (isBerhasil) {
                       // Notifikasi sukses jika berhasil terintegrasi dengan API
                       const snackBar = SnackBar(
                         duration: Duration(milliseconds: 800),
@@ -172,10 +176,11 @@ class _UktFormState extends State<UktForm> {
                               : 'Gagal memperbarui data.',
                         ),
                       );
-                      if (context.mounted)
+                      if (context.mounted) {
                         ScaffoldMessenger.of(
                           context,
                         ).showSnackBar(errorSnackBar);
+                      }
                     }
                   }
                 },

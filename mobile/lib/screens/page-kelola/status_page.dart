@@ -18,10 +18,7 @@ class _StatusPageState extends State<StatusPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<StatusProvider>(
-        context,
-        listen: false,
-      ).fetchStatusMahasiswa();
+      Provider.of<StatusProvider>(context, listen: false).fetchStatusMahasiswa();
     });
   }
 
@@ -48,7 +45,6 @@ class _StatusPageState extends State<StatusPage> {
               children: [
                 const Expanded(child: Search()),
                 const SizedBox(width: 10),
-
                 Expanded(
                   child: Consumer<StatusProvider>(
                     builder: (context, provider, child) {
@@ -56,22 +52,13 @@ class _StatusPageState extends State<StatusPage> {
                         decoration: const InputDecoration(
                           labelText: 'Filter Status',
                           border: OutlineInputBorder(),
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 10,
-                          ),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                         ),
                         value: provider.selectedFilter,
                         items: const [
                           DropdownMenuItem(value: 'ALL', child: Text('Semua')),
-                          DropdownMenuItem(
-                            value: 'AKTIF',
-                            child: Text('Aktif'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'NONAKTIF',
-                            child: Text('Nonaktif'),
-                          ),
+                          DropdownMenuItem(value: 'AKTIF', child: Text('Aktif')),
+                          DropdownMenuItem(value: 'NONAKTIF', child: Text('Nonaktif')),
                         ],
                         onChanged: (String? newValue) {
                           if (newValue != null) {
@@ -85,7 +72,6 @@ class _StatusPageState extends State<StatusPage> {
               ],
             ),
             Preset.smallSpace,
-
             Container(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
               decoration: BoxDecoration(
@@ -94,46 +80,15 @@ class _StatusPageState extends State<StatusPage> {
               ),
               child: const Row(
                 children: [
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      'NIM',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      'Nama',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 3,
-                    child: Text(
-                      'Prodi',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      'Status',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 1,
-                    child: Text(
-                      'Aksi',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
+                  Expanded(flex: 2, child: Text('NIM', style: TextStyle(fontWeight: FontWeight.bold))),
+                  Expanded(flex: 2, child: Text('Nama', style: TextStyle(fontWeight: FontWeight.bold))),
+                  Expanded(flex: 3, child: Text('Prodi', style: TextStyle(fontWeight: FontWeight.bold))),
+                  Expanded(flex: 2, child: Text('Status', style: TextStyle(fontWeight: FontWeight.bold))),
+                  Expanded(flex: 1, child: Text('Aksi', style: TextStyle(fontWeight: FontWeight.bold))),
                 ],
               ),
             ),
             const SizedBox(height: 10),
-
             Expanded(
               child: Consumer<StatusProvider>(
                 builder: (context, provider, child) {
@@ -144,7 +99,7 @@ class _StatusPageState extends State<StatusPage> {
                   if (provider.listMahasiswa.isEmpty) {
                     return const Center(
                       child: Text(
-                        'Tidak ada data status mahasiswa.\n(Pastikan pencarian atau filter data sesuai)',
+                        'Tidak ada data status mahasiswa.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.grey),
                       ),
@@ -153,79 +108,68 @@ class _StatusPageState extends State<StatusPage> {
 
                   return ListView.separated(
                     itemCount: provider.listMahasiswa.length,
-                    separatorBuilder: (context, index) =>
-                        const Divider(color: Colors.black12),
+                    separatorBuilder: (context, index) => const Divider(color: Colors.black12),
                     itemBuilder: (context, index) {
                       final mhs = provider.listMahasiswa[index];
                       final bool isAktif = mhs.ukt.toUpperCase() == 'AKTIF';
 
                       return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         child: Row(
                           children: [
+                            // 1. Kolom NIM
                             Expanded(
                               flex: 2,
                               child: Text(
-                                mhs.nim.isNotEmpty ? mhs.nim : mhs.id,
-                                style: const TextStyle(fontSize: 12),
+                                mhs.nim,
+                                style: const TextStyle(fontSize: 11),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
+                            // 2. Kolom Nama
                             Expanded(
                               flex: 2,
                               child: Text(
                                 mhs.nama,
-                                style: const TextStyle(fontSize: 12),
+                                style: const TextStyle(fontSize: 11),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
+                            // 3. Kolom Prodi
                             Expanded(
                               flex: 3,
                               child: Text(
-                                mhs.prodi.contains('|')
-                                    ? 'Teknik Informatika'
-                                    : mhs.prodi,
-                                style: const TextStyle(fontSize: 12),
+                                mhs.prodi,
+                                style: const TextStyle(fontSize: 11),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            // Badge Status
+                            // 4. Badge Status (Aktif/Nonaktif)
                             Expanded(
                               flex: 2,
                               child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 4,
-                                  horizontal: 8,
-                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
                                 decoration: BoxDecoration(
-                                  color: isAktif
-                                      ? const Color(0xFF91BAE1)
-                                      : Colors.grey,
+                                  color: isAktif ? const Color(0xFF91BAE1) : Colors.grey,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
                                   isAktif ? 'Aktif' : 'Nonaktif',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                  ),
+                                  style: const TextStyle(color: Colors.white, fontSize: 11),
                                   textAlign: TextAlign.center,
                                 ),
                               ),
                             ),
+                            // 5. Tombol Aksi Edit
                             Expanded(
                               flex: 1,
                               child: IconButton(
-                                icon: FaIcon(FontAwesomeIcons.penToSquare, color: Preset.primaryColor,),
+                                icon: FaIcon(FontAwesomeIcons.penToSquare, color: Preset.primaryColor, size: 18),
                                 onPressed: () async {
                                   final result = await Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) =>
-                                          UbahStatusPage(mahasiswa: mhs),
+                                      builder: (context) => UbahStatusPage(mahasiswa: mhs),
                                     ),
                                   );
                                   if (result == true) {

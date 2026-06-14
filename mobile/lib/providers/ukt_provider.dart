@@ -33,26 +33,24 @@ class UktProvider with ChangeNotifier {
   }
 
   /// Fungsi untuk memperbarui golongan UKT mahasiswa ke server
-  Future<bool> updateUktMahasiswa(Mahasiswa mahasiswa, String newUkt) async {
+  Future<bool> updateMahasiswaUkt(String id, String uktBaru) async {
     _isLoading = true;
-    _errorMessage = '';
     notifyListeners();
 
-    try {
-      // Oper objek mahasiswa dan string kategori ke service
-      final isSuccess = await _uktService.updateUkt(mahasiswa, newUkt);
-      if (isSuccess) {
-        await fetchAllMahasiswa();
-        return true;
-      }
-      return false;
-    } catch (e) {
-      _errorMessage = e.toString().replaceAll('Exception: ', '');
-      notifyListeners();
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+    // Memanggil service dengan parameter penyesuaian baru
+    bool berhasil = await _uktService.updateMahasiswaUkt(
+      idKeuanganMhs: id, 
+      uktValueBaru: uktBaru,
+    );
+
+    if (berhasil) {
+      await fetchAllMahasiswa(); // Refresh data otomatis setelah sukses
+    } else {
+      _errorMessage = "Gagal Memperbarui Data ke Server.";
     }
+
+    _isLoading = false;
+    notifyListeners();
+    return berhasil;
   }
 }
