@@ -8,7 +8,15 @@ const apiKeuangan = axios.create({
   }
 });
 
-// Gunakan interceptor agar token hanya disuntikkan ke instance ini saja
+// Buat instance khusus untuk API Mahasiswa (Port 8874)
+const apiMahasiswa = axios.create({
+  baseURL: "https://api-mahasiswa-4a.akufarish.my.id:8874/api",
+  headers: {
+    "Accept": "application/json",
+  }
+});
+
+// Gunakan interceptor agar token hanya disuntikkan ke instance keuangan saja
 apiKeuangan.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -22,4 +30,5 @@ apiKeuangan.interceptors.request.use(
   }
 );
 
+export { apiKeuangan, apiMahasiswa };
 export default apiKeuangan;
