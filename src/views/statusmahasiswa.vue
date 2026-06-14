@@ -1,5 +1,13 @@
 <template>
   <div class="main-content">
+
+    <!-- Modal Edit Mahasiswa -->
+    <EditMahasiswa
+      :showEditModal="showEditModal"
+      :selectedData="dataForEdit"
+      @close="showEditModal = false"
+      @update="handleAfterUpdate"
+    />
     <header class="topbar">
       <div>
         <p class="breadcrumb">Manajemen Keuangan > Status Mahasiswa</p>
@@ -41,11 +49,13 @@
           <option value="Mesin">Teknik Mesin</option>
           <option value="Sipil">Teknik Sipil</option>
         </select>
+        
         <select v-model="selectedProdi" @change="fetchDataMahasiswa">
           <option value="">Semua Prodi</option>
           <option value="D3 Teknik Informatika">D3 Teknik Informatika</option>
           <option value="D4 Teknik Informatika">D4 Teknik Informatika</option>
         </select>
+        
         <select v-model="selectedSemester" @change="fetchDataMahasiswa">
           <option value="">Semester</option>
           <option value="1">1</option>
@@ -57,11 +67,12 @@
         </select>
       </div>
     </section>
-
+    
     <section class="table-card">
       <div class="table-responsive">
+        
         <div v-if="isLoading" class="empty-state">
-          Memuat data status mahasiswa...
+          Memuat data status keuangan mahasiswa...
         </div>
         <div v-else-if="errorMessage" class="empty-state error-text">
           {{ errorMessage }}
@@ -75,7 +86,6 @@
               <th>Nama Mahasiswa</th>
               <th>Jurusan / Prodi</th>
               <th>Semester</th>
-              <th>Status Aktif</th>
               <th>Pembayaran</th>
               <th>Aksi</th>
             </tr>
@@ -84,48 +94,33 @@
             <tr v-for="(item, index) in dataMahasiswa" :key="item.id || index">
               <td>{{ (currentPage - 1) * perPage + index + 1 }}</td>
 
-              <!-- Menampilkan NIM Real / Ter-update -->
-              <td class="font-bold">{{ item.nim || "-" }}</td>
+              <td class="font-bold">{{ item.nim }}</td>
 
-              <!-- Menampilkan Nama Real / Ter-update -->
               <td class="nama-mhs">
-                {{ item.nama_mahasiswa || "Memuat Nama..." }}
+                {{ item.nama }}
               </td>
 
               <td>
                 <div class="jurusan-text">
-                  {{ item.jurusan || "Teknik Elektro" }}
+                  {{ item.jurusan_clean }}
                 </div>
                 <div class="prodi-text">
-                  {{ item.prodi || "D3 Teknik Informatika" }}
+                  {{ item.prodi_clean }}
                 </div>
               </td>
 
               <td>
-                <span class="semester-badge"
-                  >Smstr {{ item.semester || "1" }}</span
-                >
+                <span class="semester-badge">Smstr {{ item.semester }}</span>
               </td>
+
               <td>
                 <span
                   :class="[
                     'badge',
-                    statusClass(item.status || item.status_aktif),
+                    pembayaranClass(item.status_pembayaran),
                   ]"
                 >
-                  {{ item.status || item.status_aktif || "Aktif" }}
-                </span>
-              </td>
-              <td>
-                <span
-                  :class="[
-                    'badge',
-                    pembayaranClass(item.status_pembayaran || item.pembayaran),
-                  ]"
-                >
-                  {{
-                    item.status_pembayaran || item.pembayaran || "Belum Lunas"
-                  }}
+                  {{ item.status_pembayaran }}
                 </span>
               </td>
               <td>
@@ -152,8 +147,8 @@
                 </button>
               </td>
             </tr>
-            <tr v-if="tableData.length === 0">
-              <td colspan="8" class="empty-state">Data tidak ditemukan</td>
+            <tr v-if="dataMahasiswa && dataMahasiswa.length === 0">
+              <td colspan="7" class="empty-state">Data tidak ditemukan</td>
             </tr>
           </tbody>
         </table>
@@ -187,16 +182,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from "vue";
+import { ref, onMounted } from "vue";
 import apiKeuangan from "../service/axios";
 import axios from "axios";
+import EditMahasiswa from "./editmahasiswa.vue";
 
 const search = ref("");
 const selectedJurusan = ref("");
 const selectedProdi = ref("");
 const selectedSemester = ref("");
 
-const tableData = ref([]);
 const isLoading = ref(false);
 const errorMessage = ref("");
 const currentPage = ref(1);
@@ -204,147 +199,187 @@ const lastPage = ref(1);
 const perPage = ref(10);
 let searchTimeout = null;
 
-const dataMahasiswa = ref();
+const dataMahasiswa = ref([]);
 
-// Cache lokal memory supaya tidak fetch berulang-ulang untuk id mhs yang sama
-const biodataCache = reactive({});
-const TOKEN = localStorage.getItem("token");
+const loadKeuanganBackground = async () => {
+  try {
+    const responseKeuangan = await apiKeuangan.get("/keuangan-mahasiswa");
+    const listKeuangan = responseKeuangan.data?.data?.data || responseKeuangan.data?.data || responseKeuangan.data || [];
 
-// --- UTILITY AMBIL DATA SINKRONISASI SATU-SATU SECARA AMAN ---
-const loadBiodataBackground = async () => {
-  // Ambil data baris yang belum mempunyai data nama/nim real
-  tableData.value.forEach(async (item, idx) => {
-    const idMhs = item.id_mahasiswa;
-    if (!idMhs) return;
-
-    // Jika sudah ada di cache lokal, langsung pasang tanpa hit API lagi
-    if (biodataCache[idMhs]) {
-      tableData.value[idx].nama = biodataCache[idMhs].nama;
-      tableData.value[idx].nim = biodataCache[idMhs].nim;
-      tableData.value[idx].jurusan = biodataCache[idMhs].jurusan;
-      tableData.value[idx].prodi = biodataCache[idMhs].prodi;
-      return;
-    }
-
-    try {
-      // Hit langsung ke port mahasiswa (8874) dengan aman
-      const res = await axios.get(
-        `https://api-mahasiswa-4a.akufarish.my.id:8874/api/mahasiswa`,
-        {
-          timeout: 4000,
-          headers: { Accept: "application/json" },
-        },
-      );
-      console.log(res.data.data);
-
-      dataMahasiswa.value = res.data.data;
-      const resData = res.data.data;
-      if (resData) {
-        const info = {
-          nama: resData.nama || resData.NAMA || "Mahasiswa Terdaftar",
-          nim: resData.nim || resData.NIM || "220101...",
-          jurusan: resData.jurusan || "Teknik Elektro",
-          prodi:
-            resData.prodi || resData.program_studi || "D3 Teknik Informatika",
+    if (Array.isArray(listKeuangan) && dataMahasiswa.value.length > 0) {
+      dataMahasiswa.value = dataMahasiswa.value.map((mhs) => {
+        const keuanganDetail = listKeuangan.find(
+          (k) => String(k.id_mahasiswa || k.ID_MAHASISWA || k.mahasiswa_id || k.id).toLowerCase().trim() === String(mhs.id).toLowerCase().trim()
+        );
+        return {
+          ...mhs,
+          status_pembayaran: keuanganDetail?.status_pembayaran || keuanganDetail?.pembayaran || "Belum Lunas"
         };
-
-        // Simpan ke cache memory
-        biodataCache[idMhs] = info;
-
-        // Terapkan langsung ke baris tabel aktif
-        tableData.value[idx].nama = info.nama;
-        tableData.value[idx].nim = info.nim;
-        tableData.value[idx].jurusan = info.jurusan;
-        tableData.value[idx].prodi = info.prodi;
-      }
-    } catch (e) {
-      // Jika server port 8874 ngadat/timeout, berikan fallback nama rapi agar tidak kosong
-      const fallback = {
-        nama: `Mahasiswa (${idMhs.substring(0, 4).toUpperCase()})`,
-        nim: item.nim && item.nim !== "-" ? item.nim : "MHS-REG",
-        jurusan: "Teknik Elektro",
-        prodi: "D3 Teknik Informatika",
-      };
-      tableData.value[idx].nama = fallback.nama;
-      if (!tableData.value[idx].nim || tableData.value[idx].nim === "-") {
-        tableData.value[idx].nim = fallback.nim;
-      }
+      });
     }
-  });
+  } catch (err) {
+    console.error("Gagal sinkronisasi data keuangan di background:", err);
+  }
 };
 
-// --- GET LIST UTAMA KEUANGAN (PORT 8873) ---
-const fetchDataMahasiswa = async () => {
+async function fetchDataMahasiswa() {
   isLoading.value = true;
   errorMessage.value = "";
   try {
-    const response = await apiKeuangan.get("/keuangan-mahasiswa", {
-      params: {
-        page: currentPage.value,
-        search: search.value,
-        jurusan: selectedJurusan.value,
-        prodi: selectedProdi.value,
-        semester: selectedSemester.value,
-      },
-    });
+    const token = localStorage.getItem("token");
+    const headersConfig = {
+      Accept: "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+    };
 
-    const resBody = response.data;
-    let rawData = [];
+    const [resMahasiswa, resProdi] = await Promise.all([
+      axios.get(`https://api-mahasiswa-4a.akufarish.my.id:8874/api/mahasiswa`, {
+        timeout: 10000,
+        headers: headersConfig,
+        params: {
+          page: currentPage.value,
+          search: search.value,
+          jurusan: selectedJurusan.value,
+          prodi: selectedProdi.value,
+          semester: selectedSemester.value,
+        },
+      }),
+      axios.get(`https://be.karlearn.site/api/prodi`, {
+        timeout: 10000,
+        headers: headersConfig,
+      }),
+    ]);
 
-    if (resBody) {
-      if (resBody.success && resBody.data) {
-        const mainData = resBody.data;
-        if (mainData.data && Array.isArray(mainData.data)) {
-          rawData = mainData.data;
-          currentPage.value = mainData.current_page || 1;
-          lastPage.value = mainData.last_page || 1;
-          perPage.value = mainData.per_page || 10;
-        } else if (Array.isArray(mainData)) {
-          rawData = mainData;
-        }
-      } else if (
-        resBody.data &&
-        resBody.data.data &&
-        Array.isArray(resBody.data.data)
-      ) {
-        rawData = resBody.data.data;
-        currentPage.value = resBody.data.current_page || 1;
-        lastPage.value = resBody.data.last_page || 1;
+    const resMhsBody = resMahasiswa.data;
+    let listMahasiswa = [];
+
+    if (resMhsBody) {
+      if (resMhsBody.data && resMhsBody.data.data && Array.isArray(resMhsBody.data.data)) {
+        listMahasiswa = resMhsBody.data.data;
+        currentPage.value = resMhsBody.data.current_page || 1;
+        lastPage.value = resMhsBody.data.last_page || 1;
+        perPage.value = resMhsBody.data.per_page || 10;
+      } else if (resMhsBody.data && Array.isArray(resMhsBody.data)) {
+        listMahasiswa = resMhsBody.data;
+      } else if (Array.isArray(resMhsBody)) {
+        listMahasiswa = resMhsBody;
       }
     }
 
-    // Pemetaan data dasar awal
-    tableData.value = rawData.map((item) => ({
-      ...item,
-      id_mahasiswa: item.id_mahasiswa || item.ID_MAHASISWA || item.id || "",
-      nama: item.nama || null,
-      nim: item.nim || "-",
-    }));
+    const listProdi = resProdi.data?.data || resProdi.data || [];
 
-    isLoading.value = false;
+    if (!Array.isArray(listMahasiswa) || listMahasiswa.length === 0) {
+      dataMahasiswa.value = [];
+      return;
+    }
 
-    // Trigger pencarian data nama asli secara bertahap di background tanpa membebani server
-    if (tableData.value.length > 0) {
-      // setTimeout(() => {
-      //   loadBiodataBackground();
-      // }, 200);
-      // onMounted(() => {
-      //   loadBiodataBackground();
-      // });
+    const dataGabungan = listMahasiswa.map((mahasiswa) => {
+      const targetProdiId = mahasiswa.PRODI_ID || mahasiswa.prodi_id;
+
+      let rawJurusan = "";
+      if (mahasiswa.jurusan && typeof mahasiswa.jurusan === 'object') {
+        rawJurusan = mahasiswa.jurusan.name || mahasiswa.jurusan.nama || "";
+      } else {
+        rawJurusan = mahasiswa.nama_jurusan || mahasiswa.jurusan || "";
+      }
+
+      let rawProdi = "";
+      if (mahasiswa.prodi && typeof mahasiswa.prodi === 'object') {
+        rawProdi = mahasiswa.prodi.name || mahasiswa.prodi.nama || "";
+      } else {
+        rawProdi = mahasiswa.nama_prodi || mahasiswa.prodi || "";
+      }
+
+      // AMAN DARI ERROR: Dipastikan dikonversi ke String terlebih dahulu sebelum di-lowercase
+      const gabunganTeksMentah = `${String(rawJurusan)} ${String(rawProdi)}`.toLowerCase();
+
+      const prodiDitemukan = Array.isArray(listProdi) 
+        ? listProdi.find((p) => String(p.id).trim() === String(targetProdiId).trim())
+        : null;
+
+      let finalJurusan = "";
+      let finalProdi = "";
+
+      if (prodiDitemukan) {
+        finalJurusan = prodiDitemukan.nama_jurusan || prodiDitemukan.jurusan || "";
+        finalProdi = prodiDitemukan.nama_prodi || prodiDitemukan.name || prodiDitemukan.nama || "";
+      } else {
+        if (gabunganTeksMentah.includes("informatika") || gabunganTeksMentah.includes("ti")) {
+          finalJurusan = "Teknik Elektro";
+          finalProdi = gabunganTeksMentah.includes("d4") ? "D4 Teknik Informatika" : "D3 Teknik Informatika";
+        } else if (gabunganTeksMentah.includes("elektronika") || gabunganTeksMentah.includes("el")) {
+          finalJurusan = "Teknik Elektro";
+          finalProdi = "D3 Teknik Elektronika";
+        } else if (gabunganTeksMentah.includes("listrik")) {
+          finalJurusan = "Teknik Elektro";
+          finalProdi = "D3 Teknik Listrik";
+        } else if (gabunganTeksMentah.includes("mesin")) {
+          finalJurusan = "Teknik Mesin";
+          finalProdi = "D3 Teknik Mesin";
+        } else if (gabunganTeksMentah.includes("sipil")) {
+          finalJurusan = "Teknik Sipil";
+          finalProdi = "D3 Teknik Sipil";
+        } else {
+          finalJurusan = "Teknik Elektro";
+          finalProdi = "D3 Teknik Informatika";
+        }
+      }
+
+      let strJurusan = String(finalJurusan).toLowerCase().replace(/-/g, " ");
+      let strProdi = String(finalProdi).toLowerCase().replace(/-/g, " ");
+
+      if (strJurusan.includes("elektro") || strJurusan.includes("informatika")) {
+        finalJurusan = "Teknik Elektro";
+      } else if (strJurusan.includes("mesin")) {
+        finalJurusan = "Teknik Mesin";
+      } else if (strJurusan.includes("sipil")) {
+        finalJurusan = "Teknik Sipil";
+      } else {
+        finalJurusan = "Teknik Elektro";
+      }
+
+      if (strProdi.includes("informatika") || strProdi.includes("ti")) {
+        finalProdi = strProdi.includes("d4") ? "D4 Teknik Informatika" : "D3 Teknik Informatika";
+      } else if (strProdi.includes("elektronika")) {
+        finalProdi = "D3 Teknik Elektronika";
+      } else if (strProdi.includes("listrik")) {
+        finalProdi = "D3 Teknik Listrik";
+      } else if (strProdi.includes("mesin")) {
+        finalProdi = "D3 Teknik Mesin";
+      } else if (strProdi.includes("sipil")) {
+        finalProdi = "D3 Teknik Sipil";
+      } else {
+        finalProdi = "D3 Teknik Informatika";
+      }
+
+      return {
+        ...mahasiswa,
+        id: mahasiswa.id || mahasiswa.ID,
+        nama: mahasiswa.NAMA || mahasiswa.nama || mahasiswa.nama_mahasiswa || "-",
+        nim: mahasiswa.NIM || mahasiswa.nim || "-",
+        semester: mahasiswa.SEMESTER || mahasiswa.semester || "1",
+        jurusan_clean: finalJurusan,
+        prodi_clean: finalProdi,
+        status_pembayaran: mahasiswa.status_pembayaran || mahasiswa.pembayaran || "Belum Lunas"
+      };
+    });
+
+    dataMahasiswa.value = dataGabungan;
+
+    if (dataMahasiswa.value.length > 0) {
+      loadKeuanganBackground();
     }
   } catch (error) {
-    console.error("Error Get Data Keuangan:", error);
-    isLoading.value = false;
-    if (error.response && error.response.status === 429) {
-      errorMessage.value =
-        "Error Server (429): Terlalu banyak request. Silakan bersihkan cache backend Anda atau tunggu semenit.";
-    } else if (error.response) {
-      errorMessage.value = `Error Server (${error.response.status}): ${error.response.data?.message || "Gagal memuat list keuangan."}`;
+    console.error("Gagal mengambil atau menggabungkan data:", error);
+    if (error.response && error.response.status === 401) {
+      errorMessage.value = "Sesi Anda telah habis (401). Silakan Logout lalu Login kembali ke aplikasi.";
     } else {
-      errorMessage.value = "Gagal terhubung ke API keuangan-mahasiswa.";
+      errorMessage.value = "Gagal memuat data dari server akademik mahasiswa.";
     }
+  } finally {
+    isLoading.value = false;
   }
-};
+}
 
 const debounceSearch = () => {
   clearTimeout(searchTimeout);
@@ -357,61 +392,38 @@ const debounceSearch = () => {
 const changePage = (page) => {
   if (page >= 1 && page <= lastPage.value) {
     currentPage.value = page;
-    tableData.value = [];
     fetchDataMahasiswa();
   }
 };
 
-const statusClass = (status) => {
-  return String(status || "").toLowerCase() === "nonaktif"
-    ? "badge-danger"
-    : "badge-primary";
-};
-
 const pembayaranClass = (statusBayar) => {
-  const b = String(statusBayar || "").toLowerCase();
+  const b = String(statusBayar || "").toLowerCase().trim();
   if (b === "lunas" || b === "paid") return "badge-success";
   if (b === "cicilan") return "badge-warning";
   return "badge-danger";
 };
 
-const openDetailModal = async (item) => {
-  const idKey = item.id || item.id_mahasiswa;
-  if (!idKey) {
-    alert("ID data tidak valid.");
-    return;
-  }
-  try {
-    const response = await apiKeuangan.get(`/keuangan-mahasiswa/${idKey}`);
-    const data = response.data?.data || response.data;
-    alert(
-      `Detail Mahasiswa:\nNama: ${item.nama || "-"}\nNIM: ${item.nim || "-"}\nStatus: ${data.status || "Aktif"}\nPembayaran: ${data.status_pembayaran || "Belum Lunas"}`,
-    );
-  } catch (error) {
-    alert(`Gagal memuat detail dari server.`);
-  }
+// Tambahkan ref untuk mengontrol modal edit
+const showEditModal = ref(false);
+const dataForEdit = ref(null);
+
+const openDetailModal = (item) => {
+  // Langsung pakai data item dari tabel — tidak perlu fetch API lagi
+  dataForEdit.value = { ...item };
+  showEditModal.value = true;
 };
 
-async function getDataMahasiswa() {
-  const res = await apiKeuangan.get(
-    `https://api-mahasiswa-4a.akufarish.my.id:8874/api/mahasiswa`,
-    {
-      timeout: 4000,
-      headers: { Accept: "application/json" },
-    },
-  );
-  console.log(res.data.data);
-
-  dataMahasiswa.value = res.data.data;
-}
+// Setelah update berhasil dari modal, refresh tabel
+const handleAfterUpdate = () => {
+  showEditModal.value = false;
+  fetchDataMahasiswa();
+};
 
 onMounted(() => {
-  // fetchDataMahasiswa();
-  getDataMahasiswa();
+  fetchDataMahasiswa();
 });
 </script>
 
-<!-- CSS Style tetap sama seperti desain awal kamu -->
 <style scoped>
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
 .main-content {
@@ -539,10 +551,6 @@ onMounted(() => {
   font-size: 12px;
   font-weight: 600;
   display: inline-block;
-}
-.badge-primary {
-  background-color: #eff6ff;
-  color: #2563eb;
 }
 .badge-success {
   background-color: #f0fdf4;

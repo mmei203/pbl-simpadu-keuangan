@@ -16,6 +16,14 @@ const apiMahasiswa = axios.create({
   }
 });
 
+const apiAktif = axios.create({
+  baseURL: "https://api-keuangan-4a.akufarish.my.id:8873/api/status-aktif/{id_mahasiswa}",
+  headers: {
+    "Accept": "application/json",
+  }
+});
+
+
 // Gunakan interceptor agar token hanya disuntikkan ke instance keuangan saja
 apiKeuangan.interceptors.request.use(
   (config) => {
