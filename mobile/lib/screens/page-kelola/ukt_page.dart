@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart'; // 1. Wajib Import Provider
 import 'package:mobile/components/search.dart';
 import 'package:mobile/utils/config.dart';
-import 'package:mobile/models/dummy_mahasiswa.dart';
+import 'package:mobile/providers/ukt_provider.dart'; // 2. Import Provider kamu
 import 'package:mobile/screens/page-edit/ubah_ukt_page.dart';
 
 class UktPage extends StatefulWidget {
@@ -13,6 +14,15 @@ class UktPage extends StatefulWidget {
 }
 
 class _UktPageState extends State<UktPage> {
+  @override
+  void initState() {
+    super.initState();
+    // 3. Panggil fungsi fetch data dari Provider saat halaman pertama kali dibuka
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<UktProvider>(context, listen: false).fetchAllMahasiswa();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,214 +38,144 @@ class _UktPageState extends State<UktPage> {
         foregroundColor: Colors.white,
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Cari mahasiswa
-            const Search(),
-            Preset.smallSpace,
-
-            // --- AWAL TAMPILAN TABEL SESUAI DESAIN ---
-            Flexible(
-              child: Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: Column(
-                      children: [
-                        Container(
-                          color: const Color(0xFFD2E4FF),
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 15,
-                            horizontal: 10,
-                          ),
-                          child: const Row(
-                            children: [
-                              Expanded(
-                                flex: 3,
-                                child: Text(
-                                  'NIM',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 2,
-                                child: Text(
-                                  'Nama',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 4,
-                                child: Text(
-                                  'Prodi',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 2,
-                                child: Text(
-                                  'UKT',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 2,
-                                child: Text(
-                                  'Aksi',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+        padding: const EdgeInsets.only(bottom: 50),
+        child: SizedBox(
+          width: double.infinity,
+          height: double.infinity,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 15, right: 15, top: 20, bottom: 15),
+                child: const Search(),
+              ),
               
-                        // BODY DATA TABEL (BISA DI-SCROLL)
-                        Expanded(
-                          child: ListView.builder(
-                            padding: EdgeInsets.zero, 
-                            shrinkWrap:false,
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            itemCount: dummyMahasiswa.length,
-                            itemBuilder: (context, index) {
-                              final mhs = dummyMahasiswa[index];
-                              return Container(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                  horizontal: 10,
-                                ),
-                                decoration: const BoxDecoration(
-                                  border: Border(
-                                    bottom: BorderSide(
-                                      color: Color(0xFFE5EDFA),
-                                      width: 1,
+              // 4. Gunakan Consumer untuk memantau perubahan data di UktProvider
+              Expanded(
+                child: Consumer<UktProvider>(
+                  builder: (context, uktProvider, child) {
+                    // KONDISI LOADING
+                    if (uktProvider.isLoading) {
+                      return const Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    }
+
+                    // KONDISI ERROR
+                    if (uktProvider.errorMessage.isNotEmpty) {
+                      return Center(
+                        child: Text(
+                          uktProvider.errorMessage,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      );
+                    }
+
+                    // KONDISI DATA KOSONG
+                    if (uktProvider.listMahasiswa.isEmpty) {
+                      return const Center(
+                        child: Text('Tidak ada data mahasiswa.'),
+                      );
+                    }
+
+                    // KONDISI BERHASIL (TAMPILKAN TABEL)
+                    return Container(
+                      margin: const EdgeInsets.only(left: 15, right: 15, bottom: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Column(
+                          children: [
+                            // HEADER TABEL
+                            Container(
+                              color: const Color(0xFFD2E4FF),
+                              padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+                              child: const Row(
+                                children: [
+                                  Expanded(flex: 3, child: Text('NIM', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
+                                  Expanded(flex: 2, child: Text('Nama', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
+                                  Expanded(flex: 4, child: Text('Prodi', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
+                                  Expanded(flex: 2, child: Text('UKT', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
+                                  Expanded(flex: 2, child: Text('Aksi', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
+                                ],
+                              ),
+                            ),
+                      
+                            // BODY DATA TABEL
+                            Expanded(
+                              child: ListView.builder(
+                                padding: EdgeInsets.zero, 
+                                shrinkWrap: false,
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                itemCount: uktProvider.listMahasiswa.length,
+                                itemBuilder: (context, index) {
+                                  final mhs = uktProvider.listMahasiswa[index];
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+                                    decoration: const BoxDecoration(
+                                      border: Border(bottom: BorderSide(color: Color(0xFFE5EDFA), width: 1)),
                                     ),
-                                  ),
-                                ),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    // NIM
-                                    Expanded(
-                                      flex: 3,
-                                      child: Text(
-                                        mhs.nim,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        Expanded(flex: 3, child: Text(mhs.nim, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                                        Expanded(flex: 2, child: Text(mhs.nama, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                                        Expanded(
+                                          flex: 4, 
+                                          child: Text(
+                                            mhs.prodi.length > 13 ? '${mhs.prodi.substring(0, 13)}..' : mhs.prodi,
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                                            overflow: TextOverflow.ellipsis,
+                                          )
                                         ),
-                                      ),
-                                    ),
-                                    // Nama
-                                    Expanded(
-                                      flex: 2,
-                                      child: Text(
-                                        mhs.nama,
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ),
-                                    // Prodi
-                                    Expanded(
-                                      flex: 4,
-                                      child: Text(
-                                        mhs.prodi.length > 13
-                                            ? '${mhs.prodi.substring(0, 13)}..'
-                                            : mhs.prodi,
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                    // UKT
-                                    Expanded(
-                                      flex: 2,
-                                      child: Text(
-                                        mhs.ukt,
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ),
-                                    // Aksi
-                                    Expanded(
-                                      flex: 2,
-                                      child: Center(
-                                        child: InkWell(
-                                          onTap: () async {
-                                            final result = await Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    UbahUktPage(mahasiswa: mhs),
-                                              ),
-                                            );
-                                            if (result == true) {
-                                              setState(() {});
-                                            }
-                                          },
-                                          child: FaIcon(
-                                            FontAwesomeIcons.penToSquare,
-                                            color: Preset.primaryColor,
-                                            size: 20,
+                                        Expanded(flex: 2, child: Text(mhs.ukt, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                                        Expanded(
+                                          flex: 2,
+                                          child: Center(
+                                            child: InkWell(
+                                              onTap: () async {
+                                                final result = await Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => UbahUktPage(mahasiswa: mhs),
+                                                  ),
+                                                );
+                                                // Jika sukses edit data, panggil fetch ulang lewat provider tanpa setState manual
+                                                if (result == true) {
+                                                  uktProvider.fetchAllMahasiswa();
+                                                }
+                                              },
+                                              child: FaIcon(FontAwesomeIcons.penToSquare, color: Preset.primaryColor, size: 20),
+                                            ),
                                           ),
                                         ),
-                                      ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    );
+                  },
                 ),
               ),
-            ),
-            // --- AKHIR TAMPILAN TABEL ---
-          ],
+            ],
+          ),
         ),
       ),
     );

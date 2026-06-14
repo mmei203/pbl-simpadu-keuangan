@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; // 1. Tambahkan import provider
 import 'package:mobile/utils/config.dart';
-import 'package:mobile/models/dummy_mahasiswa.dart';
+import 'package:mobile/models/mahasiswa.dart';
+import 'package:mobile/providers/ukt_provider.dart'; // 2. Tambahkan import provider kamu
 
 class UktForm extends StatefulWidget {
   final Mahasiswa mahasiswa;
@@ -21,9 +23,9 @@ class _UktFormState extends State<UktForm> {
     super.initState();
     _nimController = TextEditingController(text: widget.mahasiswa.nim);
     _namaController = TextEditingController(text: widget.mahasiswa.nama);
-    
-    // Sinkronisasi format dummy data ("UKT 1") dengan value dropdown entries
-    _selectedUkt = widget.mahasiswa.ukt.replaceAll(' ', '_').toLowerCase(); 
+
+    String currentUkt = widget.mahasiswa.ukt.replaceAll(' ', '_').toLowerCase();
+    _selectedUkt = currentUkt;
   }
 
   @override
@@ -43,7 +45,6 @@ class _UktFormState extends State<UktForm> {
             crossAxisAlignment: CrossAxisAlignment.start,
             spacing: 20,
             children: [
-              // NIM (Read Only)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 spacing: 3,
@@ -62,8 +63,6 @@ class _UktFormState extends State<UktForm> {
                   ),
                 ],
               ),
-
-              // Nama (Read Only)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 spacing: 3,
@@ -93,7 +92,6 @@ class _UktFormState extends State<UktForm> {
                     initialSelection: _selectedUkt,
                     width: double.infinity,
                     inputDecorationTheme: InputDecorationTheme(
-                      alignLabelWithHint: false,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -104,43 +102,82 @@ class _UktFormState extends State<UktForm> {
                       });
                     },
                     dropdownMenuEntries: const [
-                      DropdownMenuEntry(value: 'ukt_1', label: 'UKT 1'),
-                      DropdownMenuEntry(value: 'ukt_2', label: 'UKT 2'),
-                      DropdownMenuEntry(value: 'ukt_3', label: 'UKT 3'),
-                      DropdownMenuEntry(value: 'ukt_4', label: 'UKT 4'),
-                      DropdownMenuEntry(value: 'ukt_5', label: 'UKT 5'),
+                      DropdownMenuEntry(value: '1', label: 'UKT 1'),
+                      DropdownMenuEntry(value: '2', label: 'UKT 2'),
+                      DropdownMenuEntry(value: '3', label: 'UKT 3'),
+                      DropdownMenuEntry(value: '4', label: 'UKT 4'),
+                      DropdownMenuEntry(value: '5', label: 'UKT 5'),
                     ],
                   ),
                 ],
               ),
 
-              // Button Simpan
+              // Button Simpan (PERBAIKAN LOGIKA DI SINI)
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Preset.primaryColor,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                onPressed: () {
-                  // Aksi update data dummy lokal
+                onPressed: () async {
                   if (_selectedUkt != null) {
-                    // Mengembalikan format 'ukt_1' menjadi 'UKT 1' kembali ke model data
-                    String formattedUkt = _selectedUkt!.replaceAll('_', ' ').toUpperCase();
-                    widget.mahasiswa.ukt = formattedUkt;
+                    // Tampilkan loading dialog
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (context) =>
+                          const Center(child: CircularProgressIndicator()),
+                    );
+
+                    // 2. Paket 'provider' dan 'ukt_provider' sekarang DIGUNAKAN (Warning 2 & 3 Hilang)
+                    final uktProvider = Provider.of<UktProvider>(
+                      context,
+                      listen: false,
+                    );
+                    final IsBerhasil = await uktProvider.updateUktMahasiswa(
+                      widget
+                          .mahasiswa, // 🎯 Kirim objek mahasiswa utuh, bukan cuma .nim
+                      _selectedUkt!, // Kirim ID Kategori baru dari dropdown
+                    );
+
+                    // Tutup loading dialog setelah proses asinkronus selesai
+                    if (context.mounted) Navigator.of(context).pop();
+
+                    if (IsBerhasil) {
+                      // Notifikasi sukses jika berhasil terintegrasi dengan API
+                      const snackBar = SnackBar(
+                        duration: Duration(milliseconds: 800),
+                        content: Text(
+                          'Data telah berhasil diperbarui ke server',
+                        ),
+                      );
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                        // Kembali ke UktPage dengan status true untuk memicu reload UI
+                        Navigator.of(context).pop(true);
+                      }
+                    } else {
+                      // Notifikasi gagal jika ada error dari API
+                      final errorSnackBar = SnackBar(
+                        backgroundColor: Colors.red,
+                        content: Text(
+                          uktProvider.errorMessage.isNotEmpty
+                              ? uktProvider.errorMessage
+                              : 'Gagal memperbarui data.',
+                        ),
+                      );
+                      if (context.mounted)
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(errorSnackBar);
+                    }
                   }
-
-                  // Notifikasi sukses
-                  final snackBar = const SnackBar(
-                    duration: Duration(milliseconds: 800),
-                    content: Text('Data telah disimpan'),
-                  );
-                  ScaffoldMessenger.of(context).showSnackBar(snackBar);
-
-                  // Kembali ke UktPage sambil membawa status "true" agar UI di-refresh
-                  Navigator.of(context).pop(true);
                 },
                 child: const Text(
                   'Simpan',

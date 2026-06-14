@@ -133,66 +133,27 @@ class _HomePageState extends State<HomePage> {
                           _buildStatCard(
                             title: 'Total Mahasiswa',
                             count: totalMahasiswa.toString(),
-                            backgroundColor: const Color(
-                              0xff1e3a8a,
-                            ), // Blue Navy
+                            backgroundColor: Preset.primaryColor,
                           ),
                           _buildStatCard(
                             title: 'Sudah Bayar',
                             count: sudahBayar.toString(),
-                            backgroundColor: const Color(0xff10b981), // Green
+                            backgroundColor: Preset.saveColor,
                           ),
                           _buildStatCard(
                             title: 'Sedang Mencicil',
                             count: sedangMencicil.toString(),
-                            backgroundColor: const Color(
-                              0xfff59e0b,
-                            ), // Orange/Amber
+                            backgroundColor: Preset.editColor,
                           ),
                           _buildStatCard(
                             title: 'Belum Bayar',
                             count: belumBayar.toString(),
-                            backgroundColor: const Color(0xffef4444), // Red
+                            backgroundColor: Preset.errorColor,
                           ),
                         ],
                       ),
+
                       Preset.smallSpace,
-
-                      // Notifikasi
-                      Container(
-                        padding: EdgeInsets.all(15),
-                        decoration: BoxDecoration(
-                          color: Color.fromRGBO(255, 238, 170, 100),
-                          borderRadius: BorderRadius.all(Radius.circular(15)),
-                        ),
-                        child: Column(
-                          spacing: 8,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Judul
-                            Row(
-                              spacing: 4,
-                              children: [
-                                Icon(
-                                  Icons.warning_amber_rounded,
-                                  color: Color.fromRGBO(245, 158, 11, 100),
-                                  size: 30,
-                                ),
-                                Text(
-                                  'Pemberitahuan',
-                                  style: GoogleFonts.poppins(
-                                    color: Color.fromRGBO(146, 64, 14, 100),
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            // isi pemberitahuan
-                          ],
-                        ),
-                      ),
-
                       Preset.smallSpace,
 
                       GridView.count(
@@ -206,7 +167,7 @@ class _HomePageState extends State<HomePage> {
                           MenuCard(
                             title: 'UKT',
                             icon: FontAwesomeIcons.creditCard,
-                            color: const Color.fromRGBO(37, 99, 235, 1),
+                            color: Preset.primaryColor,
                             onTap: () {
                               Navigator.pushNamed(context, 'ukt');
                               print('Pindah ke halaman UKT');

@@ -159,6 +159,7 @@ class _LoginFormState extends State<LoginForm> {
             if (userProvider.isLoginLoading)
               Positioned.fill(
                 child: Container(
+                  // ignore: deprecated_member_use
                   color: Colors.black.withOpacity(0.3),
                   child: const Center(
                     child: CircularProgressIndicator(

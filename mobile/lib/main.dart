@@ -12,6 +12,7 @@ import 'package:mobile/screens/page-kelola/cicilan_page.dart';
 import 'package:mobile/screens/page-kelola/pembayaran_page.dart';
 import 'package:mobile/screens/page-kelola/status_page.dart';
 import 'package:mobile/screens/page-kelola/ukt_page.dart';
+import 'package:mobile/providers/ukt_provider.dart';
 import 'package:mobile/screens/profile_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/utils/config.dart';
@@ -20,6 +21,7 @@ import 'package:provider/provider.dart';
 void main() async {
   await dotenv.load();
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -30,6 +32,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => UktProvider()),
       ],
       child: const MyApp(),
     ),
@@ -45,13 +48,27 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     Future.microtask(() {
       context.read<UserProvider>().getAllUser();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    }
   }
 
   @override

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:mobile/components/edit-forms/ukt_form.dart';
 import 'package:mobile/utils/config.dart';
-import 'package:mobile/models/dummy_mahasiswa.dart';
+import 'package:mobile/models/mahasiswa.dart';
 
 class UbahUktPage extends StatelessWidget {
   final Mahasiswa mahasiswa;
