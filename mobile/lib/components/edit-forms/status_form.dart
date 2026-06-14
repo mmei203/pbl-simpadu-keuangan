@@ -4,6 +4,8 @@ import 'package:mobile/services/status_service.dart';
 import 'package:mobile/utils/config.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile/providers/status_provider.dart';
+import 'package:mobile/providers/history_provider.dart';
+import 'package:mobile/models/history.dart';
 
 
 class StatusForm extends StatefulWidget {
@@ -69,6 +71,24 @@ class _StatusFormState extends State<StatusForm> {
     });
 
     if (isSuccess) {
+      final now = DateTime.now();
+      final tanggal = '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
+      final historyEntry = HistoryPembayaran(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        nama: widget.mahasiswa.nama,
+        nim: widget.mahasiswa.nim,
+        tipe: 'Status diubah menjadi ${_selectedStatus!}',
+        nominal: '-',
+        tanggal: tanggal,
+      );
+
+      try {
+        await Provider.of<HistoryProvider>(context, listen: false)
+            .addHistory(historyEntry);
+      } catch (e) {
+        debugPrint('Gagal menyimpan history Status: $e');
+      }
+
       final snackBar = const SnackBar(
         duration: Duration(milliseconds: 800),
         content: Text('Status mahasiswa berhasil diperbarui'),

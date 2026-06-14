@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:mobile/providers/pembayaran_provider.dart';
 import 'package:mobile/providers/status_provider.dart';
 import 'package:mobile/providers/user_provider.dart';
+import 'package:mobile/providers/history_provider.dart';
 import 'package:mobile/screens/home_page.dart';
 import 'package:mobile/screens/login_page.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -31,6 +32,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => HistoryProvider()),
         ChangeNotifierProvider(create: (_) => UktProvider()),
         ChangeNotifierProvider(create: (_) => StatusProvider()),
         ChangeNotifierProvider(create: (_) => PembayaranProvider()),

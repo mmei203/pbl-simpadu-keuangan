@@ -1,129 +1,102 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:mobile/models/tagihan.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mobile/services/pembayaran_service.dart';
+import 'package:mobile/services/history_service.dart';
+import 'package:mobile/models/history.dart';
 
 class PembayaranProvider with ChangeNotifier {
-  List<TagihanModel> _listTagihan = [];
+  final PembayaranService _service = PembayaranService();
+  List<TagihanModel> _tagihanList = [];
   bool _isLoading = false;
 
-  List<TagihanModel> get listTagihan => _listTagihan;
+  List<TagihanModel> get listTagihan =>
+      _tagihanList; // Sesuai error 'listTagihan'
   bool get isLoading => _isLoading;
 
-  final String baseUrl = dotenv.env['URL_KEUANGAN'] ??
-      "https://api-keuangan-4a.akufarish.my.id:8873/api";
-
-  Future<Map<String, String>> _getHeaders() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('access_token') ??
-        prefs.getString('token') ??
-        prefs.getString('TOKEN') ??
-        prefs.getString('auth_token') ??
-        '';
-    print('=== TOKEN: $token ===');
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    };
-  }
+  // Statistik untuk Dashboard
+  int get totalMahasiswa => _tagihanList.length;
+  int get jumlahSudahBayar => _tagihanList
+      .where((t) => t.status.trim().toLowerCase() == 'lunas')
+      .length;
+  int get jumlahSedangCicil => _tagihanList
+      .where((t) => t.status.trim().toLowerCase() == 'cicilan')
+      .length;
+  int get jumlahBelumBayar => _tagihanList
+      .where(
+        (t) =>
+            t.status.trim().toLowerCase() == 'belum bayar' ||
+            t.status.trim().toLowerCase() == 'belum',
+      )
+      .length;
 
   Future<void> fetchTagihan() async {
     _isLoading = true;
     notifyListeners();
-
     try {
-      final headers = await _getHeaders();
-      List<TagihanModel> semuaData = [];
-
-      // Coba fetch dengan pagination
-      int currentPage = 1;
-      bool hasMore = true;
-
-      while (hasMore) {
-        final url =
-            Uri.parse('$baseUrl/tagihan?page=$currentPage&per_page=100');
-        final response = await http.get(url, headers: headers);
-
-        print('=== FETCH PAGE $currentPage ===');
-        print('Status: ${response.statusCode}');
-
-        if (response.statusCode == 200) {
-          final Map<String, dynamic> responseData =
-              json.decode(response.body);
-
-          print('Keys: ${responseData.keys.toList()}');
-
-          if (responseData['success'] == true &&
-              responseData['data'] != null) {
-            final List<dynamic> dataTagihan = responseData['data'];
-            print('Data di page $currentPage: ${dataTagihan.length}');
-
-            semuaData.addAll(
-                dataTagihan.map((item) => TagihanModel.fromJson(item)));
-
-            // Cek apakah masih ada halaman berikutnya
-            // Sesuaikan key pagination dengan response API kamu
-            final pagination = responseData['pagination'] ??
-                responseData['meta'] ??
-                responseData;
-
-            final lastPage = pagination['last_page'] ??
-                pagination['total_pages'] ??
-                pagination['totalPages'] ??
-                1;
-
-            final int last = int.tryParse(lastPage.toString()) ?? 1;
-
-            if (currentPage >= last || dataTagihan.isEmpty) {
-              hasMore = false;
-            } else {
-              currentPage++;
-            }
-          } else {
-            hasMore = false;
-          }
-        } else {
-          print('Error status: ${response.statusCode}');
-          print('Body: ${response.body}');
-          hasMore = false;
-        }
-      }
-
-      print('=== TOTAL DATA: ${semuaData.length} ===');
-      _listTagihan = semuaData;
-    } catch (error) {
-      print('Eror saat fetch data: $error');
+      _tagihanList = await _service.getTagihanData();
+    } catch (e) {
+      debugPrint("Error fetching: $e");
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<bool> simpanPembayaran(
-      String idTagihan, Map<String, dynamic> payload) async {
-    final url = Uri.parse('$baseUrl/tagihan/$idTagihan');
-    try {
-      final headers = await _getHeaders();
+  Future<void> simpanPembayaran(
+    String idTagihan,
+    Map<String, dynamic> data,
+  ) async {
+    bool sukses = await _service.updatePembayaranData(idTagihan, data);
+    if (sukses) {
+      // Buat entri history singkat berdasarkan tagihan yang diupdate (jika ada)
+      TagihanModel? target;
+      try {
+        target = _tagihanList.firstWhere((t) => t.id == idTagihan);
+      } catch (e) {
+        target = null;
+      }
 
-      print('=== SIMPAN PAYLOAD ===');
-      print('URL: $url');
-      print('Payload: ${json.encode(payload)}');
+      String nama = target?.nama ?? '-';
+      String nim = target?.nim ?? '-';
 
-      final response = await http.put(
-        url,
-        headers: headers,
-        body: json.encode(payload),
-      );
+      // Tentukan tipe dan nominal dari payload atau dari model
+      String tipe = 'Perubahan Data';
+      if (data.containsKey('STATUS_BAYAR') || data.containsKey('status')) {
+        tipe =
+            data['STATUS_BAYAR']?.toString() ??
+            data['status']?.toString() ??
+            tipe;
+      } else if (target?.nomorCicilan != null) {
+        tipe = 'Cicilan ke-${target!.nomorCicilan}';
+      }
 
-      print('Status: ${response.statusCode}');
-      print('Body: ${response.body}');
+      String nominal = '-';
+      if (data.containsKey('nominal')) {
+        nominal = data['nominal'].toString();
+      } else if (target?.nominalCicilan != null) {
+        nominal = 'Rp. ${target!.nominalCicilan!.toStringAsFixed(0)}';
+      }
 
-      return response.statusCode == 200;
-    } catch (error) {
-      print('Eror saat menyimpan data: $error');
-      return false;
+      final now = DateTime.now();
+      final tanggal =
+          '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
+
+      try {
+        final history = HistoryPembayaran(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          nama: nama,
+          nim: nim,
+          tipe: tipe,
+          nominal: nominal,
+          tanggal: tanggal,
+        );
+        await HistoryService().add(history);
+      } catch (e) {
+        debugPrint('Gagal menyimpan history: $e');
+      }
+
+      await fetchTagihan(); // Refresh data setelah update
+      notifyListeners();
     }
   }
 }

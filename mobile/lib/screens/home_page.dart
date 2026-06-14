@@ -5,7 +5,7 @@ import 'package:mobile/components/menu_card.dart';
 import 'package:mobile/utils/config.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile/providers/user_provider.dart';
-import 'package:mobile/models/dummy_mahasiswa.dart';
+import 'package:mobile/providers/pembayaran_provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -16,15 +16,18 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   @override
+  void initState() {
+    super.initState();
+    // Memanggil fetch data pertama kali
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<PembayaranProvider>().fetchTagihan();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final user = context.watch<UserProvider>().loggedInUser;
-
-    int totalMahasiswa = dummyMahasiswa.length;
-
-    int sudahBayar = dummyMahasiswa.where((m) => m.ukt == 'UKT 1').length;
-    int sedangMencicil = dummyMahasiswa.where((m) => m.ukt == 'UKT 2').length;
-    int belumBayar = dummyMahasiswa.where((m) => m.ukt == 'UKT 3').length;
-
+    final prov = context.watch<PembayaranProvider>();
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Preset.primaryColor,
@@ -127,27 +130,26 @@ class _HomePageState extends State<HomePage> {
                         crossAxisCount: 2,
                         crossAxisSpacing: 15,
                         mainAxisSpacing: 15,
-                        childAspectRatio:
-                            1.4, // Rasio keidealan bentuk kotak card statistik
+                        childAspectRatio: 1.2,
                         children: [
                           _buildStatCard(
                             title: 'Total Mahasiswa',
-                            count: totalMahasiswa.toString(),
+                            count: prov.totalMahasiswa.toString(),
                             backgroundColor: Preset.primaryColor,
                           ),
                           _buildStatCard(
-                            title: 'Sudah Bayar',
-                            count: sudahBayar.toString(),
+                            title: 'Lunas',
+                            count: prov.jumlahSudahBayar.toString(),
                             backgroundColor: Preset.saveColor,
                           ),
                           _buildStatCard(
-                            title: 'Sedang Mencicil',
-                            count: sedangMencicil.toString(),
+                            title: 'Cicilan',
+                            count: prov.jumlahSedangCicil.toString(),
                             backgroundColor: Preset.editColor,
                           ),
                           _buildStatCard(
                             title: 'Belum Bayar',
-                            count: belumBayar.toString(),
+                            count: prov.jumlahBelumBayar.toString(),
                             backgroundColor: Preset.errorColor,
                           ),
                         ],

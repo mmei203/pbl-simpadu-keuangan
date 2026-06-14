@@ -1,7 +1,7 @@
+// file: pembayaran_page.dart
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:mobile/components/search.dart';
 import 'package:mobile/utils/config.dart';
 import 'package:mobile/providers/pembayaran_provider.dart';
 import 'package:mobile/screens/page-edit/ubah_pembayaran_page.dart';
@@ -14,12 +14,21 @@ class PembayaranPage extends StatefulWidget {
 }
 
 class _PembayaranPageState extends State<PembayaranPage> {
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<PembayaranProvider>(context, listen: false).fetchTagihan();
     });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Color _getStatusColor(String status) {
@@ -66,13 +75,55 @@ class _PembayaranPageState extends State<PembayaranPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Search(),
+            // Re-implementasi komponen search agar terhubung langsung dengan state pencarian NIM/Nama/Prodi
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.search, color: Colors.grey),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: const InputDecoration(
+                        hintText: 'Cari NIM, Nama, atau Prodi...',
+                        border: InputBorder.none,
+                        hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          _searchQuery = value.toLowerCase();
+                        });
+                      },
+                    ),
+                  ),
+                  if (_searchQuery.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(
+                        Icons.clear,
+                        size: 18,
+                        color: Colors.grey,
+                      ),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() {
+                          _searchQuery = '';
+                        });
+                      },
+                    ),
+                ],
+              ),
+            ),
             Preset.smallSpace,
 
             // Header Tabel
             Container(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
               decoration: BoxDecoration(
                 color: const Color(0xFFD6E4FF),
                 borderRadius: BorderRadius.circular(12),
@@ -81,40 +132,60 @@ class _PembayaranPageState extends State<PembayaranPage> {
                 children: [
                   Expanded(
                     flex: 2,
-                    child: Text('NIM',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 13)),
+                    child: Text(
+                      'NIM',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
                   ),
                   Expanded(
                     flex: 2,
-                    child: Text('Nama',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 13)),
+                    child: Text(
+                      'Nama',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
                   ),
                   Expanded(
                     flex: 3,
-                    child: Text('Prodi',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 13)),
+                    child: Text(
+                      'Prodi',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
                   ),
                   Expanded(
                     flex: 2,
-                    child: Text('Status',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 13)),
+                    child: Text(
+                      'Status',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
                   ),
                   Expanded(
                     flex: 1,
-                    child: Text('Aksi',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 13)),
+                    child: Text(
+                      'Aksi',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 8),
 
-            // Body Tabel
+            // Body Tabel dengan filter pencarian nim, nama, dan prodi
             Expanded(
               child: Consumer<PembayaranProvider>(
                 builder: (context, provider, child) {
@@ -122,49 +193,70 @@ class _PembayaranPageState extends State<PembayaranPage> {
                     return const Center(child: CircularProgressIndicator());
                   }
 
-                  if (provider.listTagihan.isEmpty) {
+                  // 🎯 PROSES EKSTRAKSI & FILTER DATA (NIM, Nama, Prodi)
+                  final filteredList = provider.listTagihan.where((tagihan) {
+                    final nimMhs = tagihan.nim.toLowerCase();
+                    final namaMhs = tagihan.nama.toLowerCase();
+                    final prodiMhs = tagihan.prodi.toLowerCase();
+
+                    return nimMhs.contains(_searchQuery) ||
+                        namaMhs.contains(_searchQuery) ||
+                        prodiMhs.contains(_searchQuery);
+                  }).toList();
+
+                  if (filteredList.isEmpty) {
                     return const Center(
                       child: Text(
-                        'Tidak ada data tagihan pembayaran.',
+                        'Tidak ada data tagihan pembayaran yang cocok.',
                         style: TextStyle(color: Colors.grey),
                       ),
                     );
                   }
 
                   return ListView.separated(
-                    itemCount: provider.listTagihan.length,
+                    itemCount: filteredList.length,
                     separatorBuilder: (context, index) =>
                         const Divider(color: Colors.black12, height: 1),
                     itemBuilder: (context, index) {
-                      final tagihan = provider.listTagihan[index];
+                      final tagihan = filteredList[index];
                       return Padding(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 8),
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
                         child: Row(
                           children: [
                             Expanded(
                               flex: 2,
-                              child: Text(tagihan.nim,
-                                  style: const TextStyle(fontSize: 12),
-                                  overflow: TextOverflow.ellipsis),
+                              child: Text(
+                                tagihan.nim,
+                                style: const TextStyle(fontSize: 12),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                             Expanded(
                               flex: 2,
-                              child: Text(tagihan.nama,
-                                  style: const TextStyle(fontSize: 12),
-                                  overflow: TextOverflow.ellipsis),
+                              child: Text(
+                                tagihan.nama,
+                                style: const TextStyle(fontSize: 12),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                             Expanded(
                               flex: 3,
-                              child: Text(tagihan.prodi,
-                                  style: const TextStyle(fontSize: 12),
-                                  overflow: TextOverflow.ellipsis),
+                              child: Text(
+                                tagihan.prodi,
+                                style: const TextStyle(fontSize: 12),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                             Expanded(
                               flex: 2,
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
-                                    vertical: 5, horizontal: 6),
+                                  vertical: 5,
+                                  horizontal: 6,
+                                ),
                                 decoration: BoxDecoration(
                                   color: _getStatusColor(tagihan.status),
                                   borderRadius: BorderRadius.circular(12),
@@ -184,8 +276,10 @@ class _PembayaranPageState extends State<PembayaranPage> {
                               flex: 1,
                               child: IconButton(
                                 padding: EdgeInsets.zero,
-                                icon: const Icon(Icons.edit_note,
-                                    color: Color(0xFF1A3D7C), size: 24),
+                                icon: FaIcon(
+                                  FontAwesomeIcons.penToSquare,
+                                  color: Preset.primaryColor,
+                                ),
                                 onPressed: () async {
                                   final result = await Navigator.push(
                                     context,

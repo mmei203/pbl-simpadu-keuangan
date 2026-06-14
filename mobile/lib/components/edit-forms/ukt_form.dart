@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart'; // 1. Tambahkan import provider
 import 'package:mobile/utils/config.dart';
 import 'package:mobile/models/mahasiswa.dart';
+import 'package:mobile/models/history.dart';
 import 'package:mobile/providers/ukt_provider.dart'; // 2. Tambahkan import provider kamu
+import 'package:mobile/providers/history_provider.dart';
 
 class UktForm extends StatefulWidget {
   final Mahasiswa mahasiswa;
@@ -154,7 +156,24 @@ class _UktFormState extends State<UktForm> {
                     if (context.mounted) Navigator.of(context).pop();
 
                     if (isBerhasil) {
-                      // Notifikasi sukses jika berhasil terintegrasi dengan API
+                      final now = DateTime.now();
+                      final tanggal = '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
+                      final historyEntry = HistoryPembayaran(
+                        id: DateTime.now().millisecondsSinceEpoch.toString(),
+                        nama: widget.mahasiswa.nama,
+                        nim: widget.mahasiswa.nim,
+                        tipe: 'UKT diubah menjadi ${_selectedUkt!}',
+                        nominal: '-',
+                        tanggal: tanggal,
+                      );
+
+                      try {
+                        await Provider.of<HistoryProvider>(context, listen: false)
+                            .addHistory(historyEntry);
+                      } catch (e) {
+                        debugPrint('Gagal menyimpan history Ukt: $e');
+                      }
+
                       const snackBar = SnackBar(
                         duration: Duration(milliseconds: 800),
                         content: Text(
