@@ -97,12 +97,12 @@
               <td class="font-bold">{{ item.nim }}</td>
 
               <td class="nama-mhs">
-                {{ item.nama }}
+                {{ item.nama_mahasiswa }}
               </td>
 
               <td>
                 <div class="jurusan-text">
-                  {{ item.jurusan_clean }}
+                  {{ item.jurusan_clean.name }}
                 </div>
                 <div class="prodi-text">
                   {{ item.prodi_clean }}
@@ -117,10 +117,10 @@
                 <span
                   :class="[
                     'badge',
-                    pembayaranClass(item.status_pembayaran),
+                    pembayaranClass(item.tagihan.STATUS_AKTIF),
                   ]"
                 >
-                  {{ item.status_pembayaran }}
+                  {{ item.tagihan.STATUS_AKTIF }}
                 </span>
               </td>
               <td>
@@ -232,7 +232,8 @@ async function fetchDataMahasiswa() {
       ...(token && { Authorization: `Bearer ${token}` }),
     };
 
-    const [resMahasiswa, resProdi] = await Promise.all([
+    // 1. Jalankan 3 request secara paralel demi mendapatkan data relasi yang lengkap
+    const [resMahasiswa, resProdi, resKeuangan, resTagihan] = await Promise.all([
       axios.get(`https://api-mahasiswa-4a.akufarish.my.id:8874/api/mahasiswa`, {
         timeout: 10000,
         headers: headersConfig,
@@ -248,57 +249,68 @@ async function fetchDataMahasiswa() {
         timeout: 10000,
         headers: headersConfig,
       }),
+      apiKeuangan.get(`https://api-keuangan-4a.akufarish.my.id:8873/api/keuangan-mahasiswa`, {
+        headers: headersConfig
+      }),
+      apiKeuangan.get(`https://api-keuangan-4a.akufarish.my.id:8873/api/tagihan`, {
+        headers: headersConfig
+      })
     ]);
 
     const resMhsBody = resMahasiswa.data;
-    let listMahasiswa = [];
+    const listProdi = resProdi.data?.data || resProdi.data || [];
+    const listKeuangan = resKeuangan.data?.data?.data || resKeuangan.data?.data || resKeuangan.data || [];
+    const listTagihan = resTagihan.data?.data || resTagihan.data || [];
 
-    if (resMhsBody) {
-      if (resMhsBody.data && resMhsBody.data.data && Array.isArray(resMhsBody.data.data)) {
+    let listMahasiswa = [];
+    if (resMhsBody?.data?.data) {
         listMahasiswa = resMhsBody.data.data;
         currentPage.value = resMhsBody.data.current_page || 1;
         lastPage.value = resMhsBody.data.last_page || 1;
-        perPage.value = resMhsBody.data.per_page || 10;
-      } else if (resMhsBody.data && Array.isArray(resMhsBody.data)) {
-        listMahasiswa = resMhsBody.data;
-      } else if (Array.isArray(resMhsBody)) {
-        listMahasiswa = resMhsBody;
-      }
+    } else {
+        listMahasiswa = resMhsBody.data || resMhsBody || [];
     }
 
-    const listProdi = resProdi.data?.data || resProdi.data || [];
-
-    if (!Array.isArray(listMahasiswa) || listMahasiswa.length === 0) {
+    if (!Array.isArray(listMahasiswa)) {
       dataMahasiswa.value = [];
       return;
     }
 
-    const dataGabungan = listMahasiswa.map((mahasiswa) => {
+    // 2. Mapping & Penggabungan Data Menggunakan Jembatan Keuangan
+    dataMahasiswa.value = listMahasiswa.map((mahasiswa) => {
+      const mhsIdAkademik = String(mahasiswa.id || mahasiswa.ID || "").trim();
+
+      // Jembatan 1: Cari baris keuangan yang kolom 'mahasiswa_id' atau 'id_mahasiswa'-nya cocok dengan UUID akademik
+      const keuanganMatch = Array.isArray(listKeuangan)
+        ? listKeuangan.find(k => 
+            String(k.mahasiswa_id || k.id_mahasiswa || "").trim() === mhsIdAkademik
+          )
+        : null;
+
+      let tagihanMatch = null;
+
+      // Jembatan 2: Jika ketemu di keuangan, gunakan internal ID keuangan (angka) untuk mencari data tagihannya
+      if (keuanganMatch) {
+        const internalKeuanganId = keuanganMatch.id; // Ini ID angka (contoh: 4)
+        
+        tagihanMatch = Array.isArray(listTagihan)
+          ? listTagihan.find(t => 
+              String(t.id_mahasiswa || "").trim() === String(internalKeuanganId).trim()
+            )
+          : null;
+      }
+
+      // Logika Klasifikasi Jurusan & Prodi
       const targetProdiId = mahasiswa.PRODI_ID || mahasiswa.prodi_id;
-
-      let rawJurusan = "";
-      if (mahasiswa.jurusan && typeof mahasiswa.jurusan === 'object') {
-        rawJurusan = mahasiswa.jurusan.name || mahasiswa.jurusan.nama || "";
-      } else {
-        rawJurusan = mahasiswa.nama_jurusan || mahasiswa.jurusan || "";
-      }
-
-      let rawProdi = "";
-      if (mahasiswa.prodi && typeof mahasiswa.prodi === 'object') {
-        rawProdi = mahasiswa.prodi.name || mahasiswa.prodi.nama || "";
-      } else {
-        rawProdi = mahasiswa.nama_prodi || mahasiswa.prodi || "";
-      }
-
-      // AMAN DARI ERROR: Dipastikan dikonversi ke String terlebih dahulu sebelum di-lowercase
+      let rawJurusan = mahasiswa.jurusan?.name || mahasiswa.jurusan?.nama || mahasiswa.nama_jurusan || mahasiswa.jurusan || "";
+      let rawProdi = mahasiswa.prodi?.name || mahasiswa.prodi?.nama || mahasiswa.nama_prodi || mahasiswa.prodi || "";
       const gabunganTeksMentah = `${String(rawJurusan)} ${String(rawProdi)}`.toLowerCase();
 
       const prodiDitemukan = Array.isArray(listProdi) 
         ? listProdi.find((p) => String(p.id).trim() === String(targetProdiId).trim())
         : null;
 
-      let finalJurusan = "";
-      let finalProdi = "";
+      let finalJurusan = "", finalProdi = "";
 
       if (prodiDitemukan) {
         finalJurusan = prodiDitemukan.nama_jurusan || prodiDitemukan.jurusan || "";
@@ -307,12 +319,6 @@ async function fetchDataMahasiswa() {
         if (gabunganTeksMentah.includes("informatika") || gabunganTeksMentah.includes("ti")) {
           finalJurusan = "Teknik Elektro";
           finalProdi = gabunganTeksMentah.includes("d4") ? "D4 Teknik Informatika" : "D3 Teknik Informatika";
-        } else if (gabunganTeksMentah.includes("elektronika") || gabunganTeksMentah.includes("el")) {
-          finalJurusan = "Teknik Elektro";
-          finalProdi = "D3 Teknik Elektronika";
-        } else if (gabunganTeksMentah.includes("listrik")) {
-          finalJurusan = "Teknik Elektro";
-          finalProdi = "D3 Teknik Listrik";
         } else if (gabunganTeksMentah.includes("mesin")) {
           finalJurusan = "Teknik Mesin";
           finalProdi = "D3 Teknik Mesin";
@@ -325,63 +331,31 @@ async function fetchDataMahasiswa() {
         }
       }
 
-      let strJurusan = String(finalJurusan).toLowerCase().replace(/-/g, " ");
-      let strProdi = String(finalProdi).toLowerCase().replace(/-/g, " ");
-
-      if (strJurusan.includes("elektro") || strJurusan.includes("informatika")) {
-        finalJurusan = "Teknik Elektro";
-      } else if (strJurusan.includes("mesin")) {
-        finalJurusan = "Teknik Mesin";
-      } else if (strJurusan.includes("sipil")) {
-        finalJurusan = "Teknik Sipil";
-      } else {
-        finalJurusan = "Teknik Elektro";
-      }
-
-      if (strProdi.includes("informatika") || strProdi.includes("ti")) {
-        finalProdi = strProdi.includes("d4") ? "D4 Teknik Informatika" : "D3 Teknik Informatika";
-      } else if (strProdi.includes("elektronika")) {
-        finalProdi = "D3 Teknik Elektronika";
-      } else if (strProdi.includes("listrik")) {
-        finalProdi = "D3 Teknik Listrik";
-      } else if (strProdi.includes("mesin")) {
-        finalProdi = "D3 Teknik Mesin";
-      } else if (strProdi.includes("sipil")) {
-        finalProdi = "D3 Teknik Sipil";
-      } else {
-        finalProdi = "D3 Teknik Informatika";
-      }
-
       return {
         ...mahasiswa,
-        id: mahasiswa.id || mahasiswa.ID,
+        id: mhsIdAkademik,
         nama: mahasiswa.NAMA || mahasiswa.nama || mahasiswa.nama_mahasiswa || "-",
         nim: mahasiswa.NIM || mahasiswa.nim || "-",
         semester: mahasiswa.SEMESTER || mahasiswa.semester || "1",
         jurusan_clean: finalJurusan,
         prodi_clean: finalProdi,
-        status_pembayaran: mahasiswa.status_pembayaran || mahasiswa.pembayaran || "Belum Lunas"
+        tagihan: keuanganMatch,
+        tagihan_internal_id: keuanganMatch ? keuanganMatch.id : null, // Disimpan untuk keperluan aksi Detail/Edit nanti
+        status_pembayaran: tagihanMatch?.status || tagihanMatch?.status_pembayaran || "Belum Lunas",
+        // Status keaktifan mahasiswa — dipakai di modal edit
+        status: mahasiswa.status || mahasiswa.STATUS || mahasiswa.status_mahasiswa || "Aktif"
       };
     });
 
-    dataMahasiswa.value = dataGabungan;
+    console.log("Data Berhasil Disinkronkan:", dataMahasiswa.value);
 
-    if (dataMahasiswa.value.length > 0) {
-      loadKeuanganBackground();
-    }
   } catch (error) {
-    console.error("Gagal mengambil atau menggabungkan data:", error);
-    if (error.response && error.response.status === 401) {
-      errorMessage.value = "Sesi Anda telah habis (401). Silakan Logout lalu Login kembali ke aplikasi.";
-    } else {
-      errorMessage.value = "Gagal memuat data dari server akademik mahasiswa.";
-    }
+    console.error("Gagal memuat data:", error);
+    errorMessage.value = "Gagal memuat data mahasiswa, keuangan, atau tagihan.";
   } finally {
     isLoading.value = false;
   }
-}
-
-const debounceSearch = () => {
+}const debounceSearch = () => {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
     currentPage.value = 1;
@@ -419,8 +393,18 @@ const handleAfterUpdate = () => {
   fetchDataMahasiswa();
 };
 
+async function getDataTagihan() {
+  const res = await apiKeuangan.get("https://api-keuangan-4a.akufarish.my.id:8873/api/tagihan");
+  console.log(res.data);
+  
+}
+
+
+  
+
 onMounted(() => {
   fetchDataMahasiswa();
+  getDataTagihan();
 });
 </script>
 
