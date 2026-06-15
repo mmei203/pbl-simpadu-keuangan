@@ -1,22 +1,18 @@
 <template>
   <div class="main-content">
+
+    <EditUkt
+      :showEditModal="showEditModal"
+      :selectedData="dataForEdit"
+      @close="showEditModal = false"
+      @update="handleAfterUpdate"
+    />
+
     <header class="topbar">
       <div>
-        <p class="breadcrumb">Manajemen Keuangan > UKT</p>
+        <p class="breadcrumb">Manajemen Keuangan &gt; UKT</p>
         <h1>Kelola UKT</h1>
         <p class="subtitle">Perbarui dan pantau data UKT mahasiswa secara real-time</p>
-      </div>
-
-      <div class="profile-section">
-        <button class="notif-btn">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
-          </svg>
-        </button>
-        <div class="profile-blue">
-          <img src="https://i.pravatar.cc/100" alt="profile" />
-          <span>Admin Keuangan</span>
-        </div>
       </div>
     </header>
 
@@ -27,7 +23,6 @@
         </svg>
         <input type="text" v-model="search" @input="debounceSearch" placeholder="Cari Nama atau NIM..." />
       </div>
-      
       <div class="filter-group">
         <select v-model="selectedJurusan" @change="fetchDataUkt">
           <option value="">Semua Jurusan</option>
@@ -35,25 +30,26 @@
           <option value="Mesin">Teknik Mesin</option>
           <option value="Sipil">Teknik Sipil</option>
         </select>
+        <select v-model="selectedProdi" @change="fetchDataUkt">
+          <option value="">Semua Prodi</option>
+          <option value="D3 Teknik Informatika">D3 Teknik Informatika</option>
+          <option value="D4 Teknik Informatika">D4 Teknik Informatika</option>
+        </select>
         <select v-model="selectedSemester" @change="fetchDataUkt">
           <option value="">Semester</option>
+          <option value="1">1</option>
           <option value="2">2</option>
+          <option value="3">3</option>
           <option value="4">4</option>
+          <option value="5">5</option>
           <option value="6">6</option>
         </select>
       </div>
     </section>
 
-    <EditUkt
-      :showEditModal="showEditModal"
-      :selectedData="selectedData"
-      @close="showEditModal = false"
-      @update="handleUpdate"
-    />
-
     <section class="table-card">
       <div class="table-responsive">
-        <div v-if="isLoading" class="empty-state">Memuat data keuangan mahasiswa...</div>
+        <div v-if="isLoading" class="empty-state">Memuat data UKT...</div>
         <div v-else-if="errorMessage" class="empty-state error-text">{{ errorMessage }}</div>
 
         <table v-else class="data-table">
@@ -71,43 +67,22 @@
           <tbody>
             <tr v-for="(item, index) in tableData" :key="item.id || index">
               <td>{{ (currentPage - 1) * perPage + index + 1 }}</td>
-              
-              <td class="font-bold">
-                {{ studentCache[item.id_mahasiswa]?.nim || 'Menghubungkan...' }}
-              </td>
-              
-              <td class="nama-mhs">
-                {{ studentCache[item.id_mahasiswa]?.nama || 'Loading...' }}
-              </td>
-              
+              <td class="font-bold">{{ item.nim || "-" }}</td>
+              <td class="nama-mhs">{{ item.nama || "-" }}</td>
               <td>
-                <div class="jurusan-text">
-                  {{ studentCache[item.id_mahasiswa]?.jurusan || 'Teknik Elektro' }}
-                </div>
-                <div class="prodi-text">
-                  {{ studentCache[item.id_mahasiswa]?.prodi || 'D3 Teknik Informatika' }}
-                </div>
+                <div class="jurusan-text">{{ item.jurusan_clean?.name || item.jurusan_clean || "Teknik Elektro" }}</div>
+                <div class="prodi-text">{{ item.prodi_clean || "D3 Teknik Informatika" }}</div>
               </td>
-              
               <td>
-                <span class="semester-badge">
-                  Smstr {{ item.semester || studentCache[item.id_mahasiswa]?.semester || '4' }}
+                <span class="semester-badge">Smstr {{ item.semester || "1" }}</span>
+              </td>
+              <td>
+                <span :class="['badge', uktClass(item.golongan_ukt)]">
+                  {{ item.golongan_ukt_nama }}
                 </span>
               </td>
-              
               <td>
-                <span class="ukt-badge">
-                  {{ item.golongan_ukt || item.ukt || '-' }}
-                </span>
-              </td>
-              
-              <td>
-                <button class="btn-edit" @click="openEdit(item)">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                  </svg>
-                  Edit
-                </button>
+                <button class="btn-edit" @click="openEditModal(item)">Edit</button>
               </td>
             </tr>
             <tr v-if="tableData.length === 0">
@@ -130,317 +105,264 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from "vue";
-import apiKeuangan from "../service/axios"; 
-import axios from "axios";          
+import { ref, onMounted } from "vue";
+import apiKeuangan from "../service/axios";
+import axios from "axios";
 import EditUkt from "./editukt.vue";
 
-const showEditModal = ref(false);
-const selectedData = ref(null);
-const search = ref("");
-const selectedJurusan = ref("");
+const search           = ref("");
+const selectedJurusan  = ref("");
+const selectedProdi    = ref("");
 const selectedSemester = ref("");
 
-const tableData = ref([]);
-const isLoading = ref(false);
+const tableData    = ref([]);
+const isLoading    = ref(false);
 const errorMessage = ref("");
-const currentPage = ref(1);
-const lastPage = ref(1);
-const perPage = ref(10);
-let searchTimeout = null;
+const currentPage  = ref(1);
+const lastPage     = ref(1);
+const perPage      = ref(10);
+let searchTimeout  = null;
 
-const studentCache = reactive({});
+// Modal state
+const showEditModal = ref(false);
+const dataForEdit   = ref(null);
 
-const KATEGORI_URL = "https://api-keuangan-4a.akufarish.my.id:8873/api/keuangan-mahasiswa";
-const AUTH_TOKEN = localStorage.getItem("token");
-
-// --- UTILITY MANAGEMENT CADANGAN DATA ---
-const setLocalFallback = (idMahasiswa, item) => {
-  if (!studentCache[idMahasiswa]) {
-    studentCache[idMahasiswa] = {
-      nim: idMahasiswa ? idMahasiswa.toString().substring(0, 8).toUpperCase() : "MHS-REG",
-      nama: item?.nama || "Mahasiswa SIMPADU",
-      jurusan: "Teknik Elektro",
-      prodi: "D3 Teknik Informatika",
-      semester: item?.semester || "4"
-    };
-  }
+const openEditModal = (item) => {
+  dataForEdit.value   = { ...item };
+  showEditModal.value = true;
 };
 
-// --- CORE SINKRONISASI BIODATA LANGSUNG VIA STATUS-AKTIF ENDPOINT ---
-const fetchStudentDetailsForCurrentPage = () => {
-  tableData.value.forEach(async (item) => {
-    const idMhs = item.id_mahasiswa;
-    if (!idMhs) return;
-    if (studentCache[idMhs] && studentCache[idMhs].nim !== "Menghubungkan...") return;
-
-    try {
-      // Menembak endpoint relasi status-aktif milik port 8873 yang menampung gabungan data mhs
-      const resStatusAktif = await apiKeuangan.get(`https://api-keuangan-4a.akufarish.my.id:8873/api/status-aktif/${idMhs}`, {
-        headers: { 'Authorization': `Bearer ${AUTH_TOKEN}` }
-      });
-      
-      const payload = resStatusAktif.data?.data || resStatusAktif.data;
-      
-      if (payload) {
-        // Ekstraksi data mhs dari object status-aktif atau object bersarang 'mahasiswa'
-        const innerMhs = payload.mahasiswa || payload;
-        
-        studentCache[idMhs] = {
-          nim: innerMhs.nim || innerMhs.NIM || payload.nim || "220101002",
-          nama: innerMhs.nama || innerMhs.NAMA || payload.nama || "Mahasiswa SIMPADU",
-          jurusan: innerMhs.jurusan || "Teknik Elektro",
-          prodi: innerMhs.prodi || "D3 Teknik Informatika",
-          semester: item.semester || innerMhs.semester || "4"
-        };
-        return;
-      }
-      
-      setLocalFallback(idMhs, item);
-    } catch (err) {
-      console.warn(`Gagal fetching status-aktif untuk ID ${idMhs}. Mengaktifkan cadangan.`);
-      setLocalFallback(idMhs, item);
-    }
-  });
+const handleAfterUpdate = () => {
+  showEditModal.value = false;
+  fetchDataUkt();
 };
 
-// --- FETCH UTAMA DATA UKT KEUANGAN ---
-const fetchDataUkt = async () => {
-  isLoading.value = true;
+async function fetchDataUkt() {
+  isLoading.value    = true;
   errorMessage.value = "";
   try {
-    const responseUkt = await apiKeuangan.get(KATEGORI_URL, {
-      headers: {
-        'Accept': 'application/json',
-        'Authorization': `Bearer ${AUTH_TOKEN}`
-      },
-      params: {
-        page: currentPage.value,
-        search: search.value,
-        jurusan: selectedJurusan.value,
-        semester: selectedSemester.value
+    const token = localStorage.getItem("token");
+    const headersConfig = {
+      Accept: "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+    };
+
+    // 1. PANGGIL PARALEL API
+    const [resMahasiswa, resProdi, resKeuangan, resKategoriUkt] = await Promise.all([
+      axios.get(`https://api-mahasiswa-4a.akufarish.my.id:8874/api/mahasiswa`, {
+        timeout: 10000,
+        headers: headersConfig,
+        params: {
+          page:     currentPage.value,
+          search:   search.value,
+          jurusan:  selectedJurusan.value,
+          prodi:    selectedProdi.value,
+          semester: selectedSemester.value,
+        },
+      }),
+      axios.get(`https://be.karlearn.site/api/prodi`, {
+        timeout: 10000,
+        headers: headersConfig,
+      }),
+      apiKeuangan.get(`https://api-keuangan-4a.akufarish.my.id:8873/api/keuangan-mahasiswa`, {
+        headers: headersConfig,
+      }),
+      apiKeuangan.get(`https://api-keuangan-4a.akufarish.my.id:8873/api/kategori-ukt`, {
+        headers: headersConfig,
+      }),
+    ]);
+
+    // ── Parse Mahasiswa Utama ──
+    const mhsBody = resMahasiswa.data;
+    let listMahasiswa = [];
+    if (mhsBody?.data?.data) {
+      listMahasiswa     = mhsBody.data.data;
+      currentPage.value = mhsBody.data.current_page || 1;
+      lastPage.value    = mhsBody.data.last_page    || 1;
+      perPage.value     = mhsBody.data.per_page     || 10;
+    } else {
+      listMahasiswa = mhsBody.data || mhsBody || [];
+    }
+
+    if (!Array.isArray(listMahasiswa)) {
+      tableData.value = [];
+      return;
+    }
+
+    // ── Parse Data Pendukung ──
+    const listProdi       = resProdi.data?.data || resProdi.data || [];
+    const keuBody         = resKeuangan.data;
+    const listKeuangan    = keuBody?.data?.data || keuBody?.data || keuBody || [];
+    
+    const kategoriUktBody = resKategoriUkt.data;
+    const listKategoriUkt = kategoriUktBody?.data?.data || kategoriUktBody?.data || kategoriUktBody || [];
+
+    // ── LOOPING & MAPPING DATA MAHASISWA ──
+    tableData.value = listMahasiswa.map((mahasiswa) => {
+      const nimMhs = String(mahasiswa.nim || mahasiswa.NIM || "").trim();
+      const idMhsUtama = String(mahasiswa.id || mahasiswa.ID || mahasiswa.id_mahasiswa || "").trim();
+
+      // 1. CARI RELASI KEUANGAN (Gunakan multi-kondisi ID & NIM demi akurasi)
+      const keuanganMatch = Array.isArray(listKeuangan)
+        ? listKeuangan.find((k) => {
+            const idKeuMhs = String(k.id_mahasiswa || k.ID_MAHASISWA || k.id || k.ID || "").trim();
+            const nimKeuMhs = String(k.nim || k.NIM || "").trim();
+            
+            // Cocokkan berdasarkan ID Mahasiswa atau berdasarkan NIM
+            const matchById = (idMhsUtama !== "" && idKeuMhs !== "") && (idMhsUtama === idKeuMhs);
+            const matchByNim = (nimMhs !== "" && nimKeuMhs !== "") && (nimMhs === nimKeuMhs);
+            
+            return matchById || matchByNim;
+          })
+        : null;
+
+      // 2. AMBIL ID KATEGORI UKT (Cek semua kemungkinan properti pembungkus)
+      const idKategoriUktMatch = keuanganMatch?.ID_KATEGORI || 
+                                 keuanganMatch?.id_kategori_ukt || 
+                                 keuanganMatch?.keuangan_mahasiswa?.ID_KATEGORI ||
+                                 keuanganMatch?.kategori_ukt?.ID_KATEGORI || null;
+
+      // 3. CARI KE MASTER KATEGORI UKT
+      const kategoriMatch = (idKategoriUktMatch && Array.isArray(listKategoriUkt))
+        ? listKategoriUkt.find((kat) => String(kat.ID_KATEGORI || kat.id).trim() === String(idKategoriUktMatch).trim())
+        : null;
+
+      // 4. SINKRONISASI TEKS GOLONGAN
+      let namaGolonganFinal = "-";
+      if (kategoriMatch?.GOLONGAN_UKT || kategoriMatch?.golongan_ukt) {
+        namaGolonganFinal = kategoriMatch.GOLONGAN_UKT || kategoriMatch.golongan_ukt;
+      } else if (keuanganMatch?.keuangan_mahasiswa?.kategori_ukt?.GOLONGAN_UKT) {
+        namaGolonganFinal = keuanganMatch.keuangan_mahasiswa.kategori_ukt.GOLONGAN_UKT;
+      } else if (keuanganMatch?.kategori_ukt?.GOLONGAN_UKT) {
+        namaGolonganFinal = keuanganMatch.kategori_ukt.GOLONGAN_UKT;
+      } else if (keuanganMatch?.GOLONGAN_UKT || keuanganMatch?.golongan_ukt) {
+        namaGolonganFinal = keuanganMatch.GOLONGAN_UKT || keuanganMatch.golongan_ukt;
       }
+
+      // Logika Pembersihan Data Jurusan & Prodi
+      const targetProdiId = mahasiswa.PRODI_ID || mahasiswa.prodi_id;
+      let rawJurusan = mahasiswa.jurusan?.name || mahasiswa.jurusan?.nama || mahasiswa.nama_jurusan || mahasiswa.jurusan || "";
+      let rawProdi = mahasiswa.prodi?.name || mahasiswa.prodi?.nama || mahasiswa.nama_prodi || mahasiswa.prodi || "";
+      const gabunganTeksMentah = `${String(rawJurusan)} ${String(rawProdi)}`.toLowerCase();
+
+      const prodiDitemukan = Array.isArray(listProdi)
+        ? listProdi.find((p) => String(p.id).trim() === String(targetProdiId).trim())
+        : null;
+
+      let finalJurusan = "", finalProdi = "";
+
+      if (prodiDitemukan) {
+        finalJurusan = prodiDitemukan.nama_jurusan || prodiDitemukan.jurusan || "";
+        finalProdi   = prodiDitemukan.nama_prodi || prodiDitemukan.name || prodiDitemukan.nama || "";
+      } else {
+        if (gabunganTeksMentah.includes("informatika") || gabunganTeksMentah.includes("ti")) {
+          finalJurusan = "Teknik Elektro";
+          finalProdi = gabunganTeksMentah.includes("d4") ? "D4 Teknik Informatika" : "D3 Teknik Informatika";
+        } else if (gabunganTeksMentah.includes("mesin")) {
+          finalJurusan = "Teknik Mesin";
+          finalProdi = "D3 Teknik Mesin";
+        } else if (gabunganTeksMentah.includes("sipil")) {
+          finalJurusan = "Teknik Sipil";
+          finalProdi = "D3 Teknik Sipil";
+        } else {
+          finalJurusan = "Teknik Elektro";
+          finalProdi = "D3 Teknik Informatika";
+        }
+      }
+
+      return {
+        ...mahasiswa,
+        id:                mahasiswa.id || mahasiswa.ID,
+        nama:              mahasiswa.NAMA || mahasiswa.nama || mahasiswa.nama_mahasiswa || "-",
+        nim:               nimMhs !== "" ? nimMhs : "-",
+        semester:          mahasiswa.SEMESTER || mahasiswa.semester || "1",
+        jurusan_clean:     finalJurusan,
+        prodi_clean:       finalProdi,
+        golongan_ukt:      namaGolonganFinal, 
+        golongan_ukt_nama: namaGolonganFinal, 
+        id_kategori_ukt:   idKategoriUktMatch,
+        keuangan_id:       keuanganMatch?.id || keuanganMatch?.ID_KEUANGAN_MHS || keuanganMatch?.ID_KEUANGAN || null
+      };
     });
 
-    const resBodyUkt = responseUkt.data;
-    let rawUktData = [];
-
-    if (resBodyUkt) {
-      if (resBodyUkt.success && resBodyUkt.data) {
-        const mainData = resBodyUkt.data;
-        if (mainData.data && Array.isArray(mainData.data)) {
-          rawUktData = mainData.data;
-          currentPage.value = mainData.current_page || 1;
-          lastPage.value = mainData.last_page || 1;
-          perPage.value = mainData.per_page || 10;
-        } else if (Array.isArray(mainData)) {
-          rawUktData = mainData;
-        }
-      } else if (resBodyUkt.data && resBodyUkt.data.data && Array.isArray(resBodyUkt.data.data)) {
-        rawUktData = resBodyUkt.data.data;
-        currentPage.value = resBodyUkt.data.current_page || 1;
-        lastPage.value = resBodyUkt.data.last_page || 1;
-      } else if (Array.isArray(resBodyUkt)) {
-        rawUktData = resBodyUkt;
-      }
-    }
-
-    tableData.value = rawUktData.map(item => ({
-      ...item,
-      id_mahasiswa: item.id_mahasiswa || item.id || ""
-    }));
-    
-    isLoading.value = false;
-
-    if (tableData.value.length > 0) {
-      fetchStudentDetailsForCurrentPage();
-    }
+    console.log("Data Kelola UKT Sinkronisasi Terbaru:", tableData.value);
 
   } catch (error) {
-    console.error("Gagal Mengambil Data Keuangan:", error);
-    isLoading.value = false;
-    if (error.response) {
-      errorMessage.value = `Error Server (${error.response.status}): ${error.response.data.message || 'Gagal memuat data.'}`;
+    console.error("Error fetchDataUkt:", error);
+    if (error.response?.status === 429) {
+      errorMessage.value = "Error Server (429): Terlalu banyak request. Silakan tunggu.";
+    } else if (error.response) {
+      errorMessage.value = `Error Server (${error.response.status}): ${error.response.data?.message || "Gagal memuat data UKT."}`;
     } else {
-      errorMessage.value = "Tidak ada respon dari server keuangan.";
+      errorMessage.value = "Gagal terhubung ke server.";
     }
+  } finally {
+    isLoading.value = false;
   }
-};
+}
 
-// --- INTERACTION CONTROLLER ---
 const debounceSearch = () => {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
     currentPage.value = 1;
     fetchDataUkt();
-  }, 500);
+  }, 600);
 };
 
 const changePage = (page) => {
   if (page >= 1 && page <= lastPage.value) {
     currentPage.value = page;
+    tableData.value   = [];
     fetchDataUkt();
   }
 };
 
-const openEdit = async (item) => {
-  const idKey = item.id || item.id_mahasiswa;
-  if (!idKey) {
-    alert('ID data tidak ditemukan.');
-    return;
-  }
-
-  isLoading.value = true;
-  try {
-    const response = await apiKeuangan.get(`${KATEGORI_URL}/${idKey}`, {
-      headers: {
-        'Accept': 'application/json',
-        'Authorization': `Bearer ${AUTH_TOKEN}`
-      }
-    });
-    const detailData = response.data?.data || response.data;
-    selectedData.value = { ...detailData };
-    showEditModal.value = true;
-  } catch (error) {
-    console.error('Gagal memuat detail keuangan:', error);
-    alert('Gagal memuat detail modal.');
-  } finally {
-    isLoading.value = false;
-  }
+const uktClass = (golongan) => {
+  const g = String(golongan).toLowerCase();
+  if (g.includes("1")) return "badge-success";
+  if (g.includes("2")) return "badge-primary";
+  if (g.includes("3")) return "badge-warning";
+  return "badge-danger";
 };
 
-const handleUpdate = async (updatedItem) => {
-  try {
-    const idKey = updatedItem.id || updatedItem.id_mahasiswa;
-    await apiKeuangan.put(`${KATEGORI_URL}/${idKey}`, updatedItem, {
-      headers: {
-        'Accept': 'application/json',
-        'Authorization': `Bearer ${AUTH_TOKEN}`
-      }
-    });
-    
-    alert("Data Keuangan/UKT Mahasiswa berhasil diperbarui!");
-    showEditModal.value = false;
-    selectedData.value = null;
-    fetchDataUkt();
-  } catch (error) {
-    console.error("Gagal mengupdate data:", error);
-    alert("Gagal memperbarui data ke server.");
-  }
-};
-
-onMounted(() => {
-  fetchDataUkt();
-});
+onMounted(() => fetchDataUkt());
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
-.main-content {
-  padding: 25px;
-  flex: 1;
-  font-family: 'Poppins', sans-serif;
-}
-
-/* TOPBAR STYLE */
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 25px;
-}
-.breadcrumb { font-size: 11px; color: #64748b; margin-bottom: 4px; font-weight: 400; }
-.topbar h1 { font-size: 24px; font-weight: 700; color: #1e293b; letter-spacing: -0.5px; }
-.subtitle { font-size: 13px; color: #64748b; font-weight: 400; }
-
-.profile-section { display: flex; align-items: center; gap: 15px; }
-.notif-btn {
-  background: white; border: 1px solid #e2e8f0; width: 40px; height: 40px;
-  border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-}
-.notif-btn svg { width: 20px; color: #64748b; }
-
-.profile-blue {
-  background: #1e3a8a; color: white; padding: 8px 18px;
-  border-radius: 12px; display: flex; align-items: center; gap: 12px; font-size: 13px; font-weight: 500;
-}
-.profile-blue img { width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); }
-
-/* FILTER CARD */
-.filter-card {
-  background: white; padding: 18px 20px; border-radius: 16px;
-  border: 1px solid #e2e8f0; display: flex; justify-content: space-between;
-  align-items: center; margin-bottom: 25px; gap: 20px;
-}
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+.main-content { padding: 25px; flex: 1; font-family: "Poppins", sans-serif; }
+.topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+.breadcrumb { font-size: 11px; color: #64748b; margin-bottom: 4px; }
+.topbar h1 { font-size: 24px; font-weight: 700; color: #1e293b; }
+.subtitle { font-size: 13px; color: #64748b; }
+.filter-card { background: white; padding: 18px 20px; border-radius: 16px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; gap: 20px; }
 .search-box { position: relative; flex: 1; max-width: 400px; }
-.search-icon {
-  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
-  width: 18px; color: #94a3b8;
-}
-.search-box input {
-  width: 100%; padding: 11px 15px 11px 42px; border: 1px solid #e2e8f0;
-  border-radius: 12px; outline: none; font-size: 13px; font-family: 'Poppins', sans-serif; transition: 0.3s;
-}
-.search-box input:focus { border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59,130,246,0.08); }
-
+.search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; color: #94a3b8; }
+.search-box input { width: 100%; padding: 11px 15px 11px 42px; border: 1px solid #e2e8f0; border-radius: 12px; outline: none; font-size: 13px; }
 .filter-group { display: flex; gap: 12px; }
-.filter-group select {
-  padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 12px;
-  font-size: 13px; font-family: 'Poppins', sans-serif; outline: none; background: #f8fafc; cursor: pointer; color: #475569;
-}
-
-/* TABLE STYLE */
-.table-card {
-  background: white; border-radius: 16px; border: 1px solid #e2e8f0;
-  overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-}
+.filter-group select { padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 13px; background: #f8fafc; }
+.table-card { background: white; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; }
 .table-responsive { overflow-x: auto; }
 .data-table { width: 100%; border-collapse: collapse; text-align: left; }
-.data-table th {
-  background: #f8fafc; padding: 16px; font-size: 12px;
-  text-transform: uppercase; color: #64748b; font-weight: 700;
-  border-bottom: 1px solid #e2e8f0; letter-spacing: 0.5px;
-}
-.data-table td { padding: 16px; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #334155; }
-.font-bold { font-weight: 700; color: #1e3a8a; word-break: break-all; max-width: 150px; }
-.nama-mhs { font-weight: 500; color: #1e293b; }
-
-.jurusan-text { font-weight: 600; color: #334155; font-size: 13px; }
-.prodi-text { font-size: 12px; color: #64748b; font-weight: 400; }
-
-.semester-badge {
-  background: #eff6ff; color: #2563eb; padding: 5px 12px;
-  border-radius: 8px; font-size: 11px; font-weight: 600;
-}
-.ukt-badge {
-  background: #f0fdf4; color: #15803d; padding: 5px 12px;
-  border-radius: 8px; font-size: 11px; font-weight: 700; border: 1px solid #dcfce7;
-}
-
-.btn-edit {
-  background: white; border: 1px solid #e2e8f0; padding: 7px 14px;
-  border-radius: 10px; cursor: pointer; display: flex; align-items: center;
-  gap: 6px; font-size: 12px; font-weight: 600; color: #64748b; transition: 0.2s;
-}
-.btn-edit svg { width: 15px; }
-.btn-edit:hover { border-color: #3b82f6; color: #3b82f6; background: #eff6ff; }
-
-.empty-state { text-align: center; padding: 50px; color: #94a3b8; font-size: 14px; }
+.data-table th { background: #f8fafc; padding: 16px; font-size: 12px; text-transform: uppercase; color: #64748b; font-weight: 700; border-bottom: 1px solid #e2e8f0; }
+.data-table td { padding: 16px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+.font-bold { font-weight: 700; color: #1e3a8a; }
+.nama-mhs { font-weight: 500; }
+.jurusan-text { font-weight: 600; font-size: 13px; }
+.prodi-text { font-size: 12px; color: #64748b; }
+.semester-badge { background: #eff6ff; color: #2563eb; padding: 5px 12px; border-radius: 8px; font-size: 11px; font-weight: 600; }
+.badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
+.badge-primary { background-color: #eff6ff; color: #2563eb; }
+.badge-success { background-color: #f0fdf4; color: #16a34a; }
+.badge-warning { background-color: #fffbeb; color: #d97706; }
+.badge-danger  { background-color: #fef2f2; color: #dc2626; }
+.btn-edit { background: white; border: 1px solid #cbd5e1; padding: 6px 16px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; color: #334155; }
+.btn-edit:hover { border-color: #2563eb; color: #2563eb; background: #f0f9ff; }
+.empty-state { text-align: center; padding: 50px; color: #94a3b8; }
 .error-text { color: #ef4444; }
-
-/* PAGINATION */
-.pagination {
-  padding: 20px; display: flex; justify-content: space-between;
-  align-items: center; background: #f8fafc; border-top: 1px solid #e2e8f0;
-}
-.pagination p { font-size: 13px; color: #64748b; font-weight: 400; }
+.pagination { padding: 20px; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border-top: 1px solid #e2e8f0; }
 .page-controls { display: flex; gap: 6px; }
-.control-btn {
-  width: 36px; height: 36px; display: flex; align-items: center;
-  justify-content: center; border-radius: 10px; border: 1px solid #e2e8f0;
-  background: white; cursor: pointer; font-size: 13px; transition: 0.2s; font-weight: 500;
-}
-.control-btn.active { background: #1e3a8a; color: white; border-color: #1e3a8a; font-weight: 600; }
+.control-btn { width: 36px; height: 36px; border-radius: 10px; border: 1px solid #e2e8f0; background: white; cursor: pointer; }
+.control-btn.active { background: #1e3a8a; color: white; border-color: #1e3a8a; }
 .control-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 </style>
