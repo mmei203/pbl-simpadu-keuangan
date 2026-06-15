@@ -3,7 +3,6 @@ import 'package:mobile/components/profile_field.dart';
 
 class ProfileCard extends StatelessWidget {
   final String name;
-  final String role;
   final String email;
   final String imageUrl;
   final VoidCallback onLogout;
@@ -12,7 +11,6 @@ class ProfileCard extends StatelessWidget {
   const ProfileCard({
     super.key,
     required this.name,
-    required this.role,
     required this.email,
     required this.imageUrl,
     required this.onLogout,
@@ -38,23 +36,24 @@ class ProfileCard extends StatelessWidget {
                   Center(
                     child: Column(
                       spacing: 5,
-                      children: [Text(
-                        name,
-                        style: TextStyle(
-                          fontSize: 25,
-                          fontWeight: FontWeight.bold
+                      children: [
+                        Text(
+                          name,
+                          style: TextStyle(
+                            fontSize: 25,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),Text(role)],
+                      ],
                     ),
                   ),
-                  SizedBox(height: 20,),
+                  SizedBox(height: 20),
                   // field
                   ProfileField(label: 'Nama', value: name),
-                  ProfileField(label: 'Role', value: role),
                   ProfileField(label: 'Email', value: email),
-          
+
                   Spacer(),
-          
+
                   Padding(
                     padding: EdgeInsets.only(bottom: 90),
                     child: Center(
@@ -86,13 +85,9 @@ class ProfileCard extends StatelessWidget {
                     border: Border.all(color: Colors.white, width: 3),
                   ),
                   child: ClipOval(
-                    child: Image.network(
-                      imageUrl,
-                      fit: BoxFit.cover,
-                    ),
+                    child: Image.network(imageUrl, fit: BoxFit.cover),
                   ),
                 ),
-
               ],
             ),
           ),

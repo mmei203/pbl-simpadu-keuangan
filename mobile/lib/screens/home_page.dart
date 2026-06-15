@@ -18,7 +18,6 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    // Memanggil fetch data pertama kali
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<PembayaranProvider>().fetchTagihan();
     });
@@ -257,7 +256,7 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(
             height: 2,
-          ), // Memberikan sedikit padding bawah seimbang
+          ),
         ],
       ),
     );

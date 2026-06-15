@@ -24,11 +24,9 @@ class PembayaranService {
     };
   }
 
-  // 🎯 HELPER MAPPING: Menerjemahkan prodi_id angka menjadi Nama Prodi asli
   String _konversiProdiIdKeNama(dynamic prodiId) {
     if (prodiId == null) return '-';
     
-    // Konversi ke string untuk mengantisipasi tipe data int maupun string dari API
     String idStr = prodiId.toString().trim();
     
     switch (idStr) {
@@ -39,7 +37,7 @@ class PembayaranService {
       case '13':
         return 'Manajemen Informatika';
       default:
-        return 'Prodi ID: $idStr'; // Fallback jika ada ID baru yang belum terdaftar
+        return 'Prodi ID: $idStr';
     }
   }
 
@@ -57,7 +55,6 @@ class PembayaranService {
           
           List<TagihanModel> temporaryList = [];
 
-          // Ambil master data mahasiswa dari port :8874
           final List<dynamic> semuaMahasiswa = await _fetchAllMahasiswa(headers);
 
           for (var item in data) {
@@ -73,11 +70,9 @@ class PembayaranService {
               );
               
               if (detailMhs != null) {
-                // Skenario 1: API Lancar, ambil data segar
                 final String nimAsli = detailMhs['nim']?.toString() ?? '-';
                 final String namaAsli = detailMhs['nama_mahasiswa']?.toString() ?? '-';
                 
-                // 🎯 SUNTIKKAN HASIL KONVERSI NAMA PRODI DI SINI
                 final String prodiAsli = _konversiProdiIdKeNama(detailMhs['prodi_id']);
 
                 tagihan = TagihanModel(
@@ -85,7 +80,7 @@ class PembayaranService {
                   idKeuanganMhs: tagihan.idKeuanganMhs,
                   nim: nimAsli,
                   nama: namaAsli,
-                  prodi: prodiAsli, // Nama prodi sudah rapi
+                  prodi: prodiAsli,
                   status: tagihan.status,
                   totalTagihan: tagihan.totalTagihan,
                   terbayar: tagihan.terbayar,
@@ -101,7 +96,6 @@ class PembayaranService {
                   tglBayar: tagihan.tglBayar,
                 );
               } else {
-                // Skenario 2: Server :8874 timeout/down, amankan data lama agar tidak strip (-)
                 tagihan = TagihanModel(
                   id: tagihan.id,
                   idKeuanganMhs: tagihan.idKeuanganMhs,

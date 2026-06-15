@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:mobile/models/tagihan.dart'; // Pastikan import model ini ada
+import 'package:mobile/models/tagihan.dart';
 import 'package:mobile/components/edit-forms/pembayaran_form.dart';
 
 class UbahPembayaranPage extends StatelessWidget {
-  final TagihanModel tagihan; // 🎯 Diubah dari Tagihan ke TagihanModel
+  final TagihanModel tagihan;
 
   const UbahPembayaranPage({super.key, required this.tagihan});
 
@@ -23,7 +23,7 @@ class UbahPembayaranPage extends StatelessWidget {
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: PembayaranForm(tagihan: tagihan), // Teruskan ke form
+          child: PembayaranForm(tagihan: tagihan),
         ),
       ),
     );

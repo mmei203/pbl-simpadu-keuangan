@@ -5,7 +5,6 @@ import 'package:mobile/components/search.dart';
 import 'package:mobile/utils/config.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile/providers/history_provider.dart';
-import 'package:mobile/models/history.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
@@ -17,7 +16,6 @@ class HistoryPage extends StatefulWidget {
 class _HistoryPageState extends State<HistoryPage> {
   @override
   Widget build(BuildContext context) {
-    // Pastikan history dimuat ketika halaman ditampilkan
     Future.microtask(() => context.read<HistoryProvider>().loadHistory());
     return Scaffold(
       appBar: AppBar(
@@ -34,14 +32,12 @@ class _HistoryPageState extends State<HistoryPage> {
         backgroundColor: Preset.primaryColor,
         foregroundColor: Colors.white,
       ),
-      // Menerapkan bodi full dengan Column dan Expanded terluar
       body: SizedBox(
         width: double.infinity,
         height: double.infinity,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Bagian Search Bar diberi padding agar tidak terlalu menempel ke tepi layar
             Padding(
               padding: const EdgeInsets.only(
                 left: 15,
@@ -52,7 +48,6 @@ class _HistoryPageState extends State<HistoryPage> {
               child: const Search(),
             ),
 
-            // ================= LIST HISTORY SEKARANG FULL LAYAR =================
             Expanded(
               child: Consumer<HistoryProvider>(
                 builder: (context, hp, _) {
@@ -149,7 +144,6 @@ class _HistoryPageState extends State<HistoryPage> {
                 },
               ),
             ),
-            // ===================================================================
           ],
         ),
       ),

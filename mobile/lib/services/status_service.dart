@@ -34,7 +34,6 @@ class StatusService {
     try {
       final token = await _getValidToken();
 
-      // 1. Ambil Data Keuangan Mahasiswa (Status Aktif)
       final responseKeuangan = await http.get(
         Uri.parse('$cleanUrlKeuangan/keuangan-mahasiswa'),
         headers: {
@@ -44,7 +43,6 @@ class StatusService {
         },
       );
 
-      // 2. Ambil Data Profil Mahasiswa (Nama, NIM, Prodi)
       final responseMhs = await http.get(
         Uri.parse('$cleanUrlMahasiswa/mahasiswa'),
         headers: {
@@ -86,7 +84,6 @@ class StatusService {
           String finalNama = '-';
           String finalProdi = '-';
 
-          // Pencarian ke objek listMahasiswaRaw
           final detailMhs = listMahasiswaRaw.firstWhere((m) {
             final mId = (m['id_mahasiswa'] ?? m['ID_MAHASISWA'] ?? '')
                 .toString()
@@ -95,12 +92,10 @@ class StatusService {
           }, orElse: () => null);
 
           if (detailMhs != null) {
-            // Sesuai Dokumentasi: Menggunakan field 'nim' dan 'nama_mahasiswa'
             finalNim = (detailMhs['nim'] ?? idMhsUkt).toString();
             finalNama = (detailMhs['nama_mahasiswa'] ?? 'Tanpa Nama')
                 .toString();
 
-            // Konversi prodi_id dari dokumentasi menjadi teks Prodi di UI
             final String prodiId = (detailMhs['prodi_id'] ?? '').toString();
             if (prodiId == '2' ||
                 finalNim.contains('KAT05') ||
@@ -110,10 +105,8 @@ class StatusService {
               finalProdi = "D3 Teknik Informatika";
             }
           } else {
-            // Logika Fallback jika data terputus / tidak sinkron
             finalNim = idMhsUkt.isNotEmpty ? idMhsUkt : "22010103001";
 
-            // Generate nama dari potongan NIM
             String urutan = finalNim.length > 3
                 ? finalNim.substring(finalNim.length - 3)
                 : "001";
@@ -148,7 +141,6 @@ class StatusService {
     }
   }
 
-  // Fungsi updateStatus tetap sama
   Future<bool> updateStatus(
     String idKeuangan,
     String idMahasiswa,

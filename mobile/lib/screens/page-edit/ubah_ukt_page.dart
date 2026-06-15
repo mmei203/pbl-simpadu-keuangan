@@ -25,7 +25,6 @@ class UbahUktPage extends StatelessWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Melemparkan data mahasiswa ke form edit
           UktForm(mahasiswa: mahasiswa),
         ],
       ),

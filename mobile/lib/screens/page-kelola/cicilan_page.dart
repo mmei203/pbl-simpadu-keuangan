@@ -52,9 +52,6 @@ class _CicilanPageState extends State<CicilanPage> {
               ],
             ),
             Preset.smallSpace,
-            // tabel
-            // header tabel
-            // body tabel
           ],
         ),
       ),

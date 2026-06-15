@@ -14,29 +14,23 @@ class LoginForm extends StatefulWidget {
 }
 
 class _LoginFormState extends State<LoginForm> {
-  // FORM KEY
   final _formKey = GlobalKey<FormState>();
 
-  // CONTROLLER
   final _emailController = TextEditingController();
   final _passController = TextEditingController();
 
-  // SERVICE
   final UserService userService = UserService();
 
-  // SHOW / HIDE PASSWORD
   bool obsecurePass = true;
 
   @override
   void initState() {
     super.initState();
 
-    // DEFAULT VALUE
     _emailController.text = 'tim4@admin.com';
     _passController.text = 'pass#tim4';
   }
 
-  // LOGIN FUNCTION
   Future<void> login() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -47,13 +41,11 @@ class _LoginFormState extends State<LoginForm> {
 
     if (!mounted) return;
 
-    // Panggil login melalui provider dengan loading state
     UserResponse? user = await context.read<UserProvider>().login(userRequests);
 
     if (user != null) {
       if (!mounted) return;
 
-      // Simpan ke provider
       context.read<UserProvider>().setLoggedInUser(user);
 
       Navigator.pushReplacementNamed(context, 'home');
@@ -77,7 +69,6 @@ class _LoginFormState extends State<LoginForm> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  // EMAIL
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -98,7 +89,6 @@ class _LoginFormState extends State<LoginForm> {
 
                   Preset.smallSpace,
 
-                  // PASSWORD
                   TextFormField(
                     controller: _passController,
                     keyboardType: TextInputType.visiblePassword,
@@ -138,7 +128,6 @@ class _LoginFormState extends State<LoginForm> {
 
                   Preset.smallSpace,
 
-                  // BUTTON LOGIN
                   Button(
                     width: double.infinity,
                     title: userProvider.isLoginLoading ? 'Loading...' : 'Login',
@@ -155,11 +144,9 @@ class _LoginFormState extends State<LoginForm> {
                 ],
               ),
             ),
-            // LOADING OVERLAY
             if (userProvider.isLoginLoading)
               Positioned.fill(
                 child: Container(
-                  // ignore: deprecated_member_use
                   color: Colors.black.withOpacity(0.3),
                   child: const Center(
                     child: CircularProgressIndicator(

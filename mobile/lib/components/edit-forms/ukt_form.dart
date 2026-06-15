@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // 1. Tambahkan import provider
+import 'package:provider/provider.dart';
 import 'package:mobile/utils/config.dart';
 import 'package:mobile/models/mahasiswa.dart';
 import 'package:mobile/models/history.dart';
-import 'package:mobile/providers/ukt_provider.dart'; // 2. Tambahkan import provider kamu
+import 'package:mobile/providers/ukt_provider.dart';
 import 'package:mobile/providers/history_provider.dart';
 
 class UktForm extends StatefulWidget {
@@ -26,7 +26,6 @@ class _UktFormState extends State<UktForm> {
     _nimController = TextEditingController(text: widget.mahasiswa.nim);
     _namaController = TextEditingController(text: widget.mahasiswa.nama);
 
-    // FIX: Samakan format dengan nilai di dropdown menu entries ("Gol 1", "Gol 2", dst)
     _selectedUkt = widget.mahasiswa.ukt;
   }
 
@@ -84,7 +83,6 @@ class _UktFormState extends State<UktForm> {
                 ],
               ),
 
-              // Golongan UKT (Dropdown)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 spacing: 3,
@@ -106,10 +104,7 @@ class _UktFormState extends State<UktForm> {
                     dropdownMenuEntries: const [
                       DropdownMenuEntry(value: 'KAT056', label: 'Golongan 1'),
                       DropdownMenuEntry(value: 'KAT057', label: 'Golongan 2'),
-                      DropdownMenuEntry(
-                        value: 'KAT058',
-                        label: 'Golongan 3',
-                      ), // Sesuaikan kodenya dengan database API kamu
+                      DropdownMenuEntry(value: 'KAT058', label: 'Golongan 3'),
                       DropdownMenuEntry(value: 'KAT059', label: 'Golongan 4'),
                       DropdownMenuEntry(value: 'KAT060', label: 'Golongan 5'),
                     ],
@@ -132,7 +127,6 @@ class _UktFormState extends State<UktForm> {
                 ),
                 onPressed: () async {
                   if (_selectedUkt != null) {
-                    // Tampilkan loading dialog
                     showDialog(
                       context: context,
                       barrierDismissible: false,
@@ -145,19 +139,17 @@ class _UktFormState extends State<UktForm> {
                       listen: false,
                     );
 
-                    // FIX: Mengubah pemanggilan metode sesuai nama fungsi di Provider (updateMahasiswaUkt)
-                    // serta mengirimkan parameter id utama dan nilai ukt barunya
                     final isBerhasil = await uktProvider.updateMahasiswaUkt(
                       widget.mahasiswa.id,
                       _selectedUkt!,
                     );
 
-                    // Tutup loading dialog setelah proses asinkronus selesai
                     if (context.mounted) Navigator.of(context).pop();
 
                     if (isBerhasil) {
                       final now = DateTime.now();
-                      final tanggal = '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
+                      final tanggal =
+                          '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
                       final historyEntry = HistoryPembayaran(
                         id: DateTime.now().millisecondsSinceEpoch.toString(),
                         nama: widget.mahasiswa.nama,
@@ -168,8 +160,10 @@ class _UktFormState extends State<UktForm> {
                       );
 
                       try {
-                        await Provider.of<HistoryProvider>(context, listen: false)
-                            .addHistory(historyEntry);
+                        await Provider.of<HistoryProvider>(
+                          context,
+                          listen: false,
+                        ).addHistory(historyEntry);
                       } catch (e) {
                         debugPrint('Gagal menyimpan history Ukt: $e');
                       }
@@ -182,11 +176,9 @@ class _UktFormState extends State<UktForm> {
                       );
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                        // Kembali ke UktPage dengan status true untuk memicu reload UI
                         Navigator.of(context).pop(true);
                       }
                     } else {
-                      // Notifikasi gagal jika ada error dari API
                       final errorSnackBar = SnackBar(
                         backgroundColor: Colors.red,
                         content: Text(

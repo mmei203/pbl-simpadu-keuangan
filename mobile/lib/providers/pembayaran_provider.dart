@@ -10,10 +10,9 @@ class PembayaranProvider with ChangeNotifier {
   bool _isLoading = false;
 
   List<TagihanModel> get listTagihan =>
-      _tagihanList; // Sesuai error 'listTagihan'
+      _tagihanList;
   bool get isLoading => _isLoading;
 
-  // Statistik untuk Dashboard
   int get totalMahasiswa => _tagihanList.length;
   int get jumlahSudahBayar => _tagihanList
       .where((t) => t.status.trim().toLowerCase() == 'lunas')
@@ -48,7 +47,6 @@ class PembayaranProvider with ChangeNotifier {
   ) async {
     bool sukses = await _service.updatePembayaranData(idTagihan, data);
     if (sukses) {
-      // Buat entri history singkat berdasarkan tagihan yang diupdate (jika ada)
       TagihanModel? target;
       try {
         target = _tagihanList.firstWhere((t) => t.id == idTagihan);
@@ -59,7 +57,6 @@ class PembayaranProvider with ChangeNotifier {
       String nama = target?.nama ?? '-';
       String nim = target?.nim ?? '-';
 
-      // Tentukan tipe dan nominal dari payload atau dari model
       String tipe = 'Perubahan Data';
       if (data.containsKey('STATUS_BAYAR') || data.containsKey('status')) {
         tipe =
@@ -95,7 +92,7 @@ class PembayaranProvider with ChangeNotifier {
         debugPrint('Gagal menyimpan history: $e');
       }
 
-      await fetchTagihan(); // Refresh data setelah update
+      await fetchTagihan();
       notifyListeners();
     }
   }

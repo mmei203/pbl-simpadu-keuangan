@@ -48,8 +48,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       .map((w) => w[0].toUpperCase() + w.substring(1))
                       .join(' ') ??
                   'Admin',
-              role: 'role admin', // nanti get role
-              email: 'email atmin', //nanti get email
+              email: 'email atmin',
               imageUrl: 'https://i.pravatar.cc/150?img=3',
               onLogout: () {
                 showDialog(

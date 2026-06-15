@@ -19,7 +19,6 @@ class HistoryService {
 
   Future<void> add(HistoryPembayaran item) async {
     final list = await getAll();
-    // insert newest first
     list.insert(0, item);
     final prefs = await SharedPreferences.getInstance();
     final encoded = json.encode(list.map((e) => e.toJson()).toList());

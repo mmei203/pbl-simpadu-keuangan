@@ -2,9 +2,9 @@ class HistoryPembayaran {
   final String id;
   final String nama;
   final String nim;
-  final String tipe; // contoh: 'Cicilan ke-1', 'Pembayaran Lunas'
-  final String nominal; // sudah diformat seperti 'Rp. 1.000.000,00'
-  final String tanggal; // format 'dd/MM/yyyy'
+  final String tipe;
+  final String nominal;
+  final String tanggal;
 
   HistoryPembayaran({
     required this.id,

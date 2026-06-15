@@ -18,7 +18,10 @@ class _StatusPageState extends State<StatusPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<StatusProvider>(context, listen: false).fetchStatusMahasiswa();
+      Provider.of<StatusProvider>(
+        context,
+        listen: false,
+      ).fetchStatusMahasiswa();
     });
   }
 
@@ -52,13 +55,22 @@ class _StatusPageState extends State<StatusPage> {
                         decoration: const InputDecoration(
                           labelText: 'Filter Status',
                           border: OutlineInputBorder(),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 10,
+                          ),
                         ),
                         value: provider.selectedFilter,
                         items: const [
                           DropdownMenuItem(value: 'ALL', child: Text('Semua')),
-                          DropdownMenuItem(value: 'AKTIF', child: Text('Aktif')),
-                          DropdownMenuItem(value: 'NONAKTIF', child: Text('Nonaktif')),
+                          DropdownMenuItem(
+                            value: 'AKTIF',
+                            child: Text('Aktif'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'NONAKTIF',
+                            child: Text('Nonaktif'),
+                          ),
                         ],
                         onChanged: (String? newValue) {
                           if (newValue != null) {
@@ -80,11 +92,41 @@ class _StatusPageState extends State<StatusPage> {
               ),
               child: const Row(
                 children: [
-                  Expanded(flex: 2, child: Text('NIM', style: TextStyle(fontWeight: FontWeight.bold))),
-                  Expanded(flex: 2, child: Text('Nama', style: TextStyle(fontWeight: FontWeight.bold))),
-                  Expanded(flex: 3, child: Text('Prodi', style: TextStyle(fontWeight: FontWeight.bold))),
-                  Expanded(flex: 2, child: Text('Status', style: TextStyle(fontWeight: FontWeight.bold))),
-                  Expanded(flex: 1, child: Text('Aksi', style: TextStyle(fontWeight: FontWeight.bold))),
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      'NIM',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      'Nama',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      'Prodi',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      'Status',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 1,
+                    child: Text(
+                      'Aksi',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -108,16 +150,19 @@ class _StatusPageState extends State<StatusPage> {
 
                   return ListView.separated(
                     itemCount: provider.listMahasiswa.length,
-                    separatorBuilder: (context, index) => const Divider(color: Colors.black12),
+                    separatorBuilder: (context, index) =>
+                        const Divider(color: Colors.black12),
                     itemBuilder: (context, index) {
                       final mhs = provider.listMahasiswa[index];
                       final bool isAktif = mhs.ukt.toUpperCase() == 'AKTIF';
 
                       return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         child: Row(
                           children: [
-                            // 1. Kolom NIM
                             Expanded(
                               flex: 2,
                               child: Text(
@@ -126,7 +171,6 @@ class _StatusPageState extends State<StatusPage> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            // 2. Kolom Nama
                             Expanded(
                               flex: 2,
                               child: Text(
@@ -135,7 +179,6 @@ class _StatusPageState extends State<StatusPage> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            // 3. Kolom Prodi
                             Expanded(
                               flex: 3,
                               child: Text(
@@ -144,32 +187,43 @@ class _StatusPageState extends State<StatusPage> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            // 4. Badge Status (Aktif/Nonaktif)
                             Expanded(
                               flex: 2,
                               child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 4,
+                                  horizontal: 4,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: isAktif ? const Color(0xFF91BAE1) : Colors.grey,
+                                  color: isAktif
+                                      ? const Color(0xFF91BAE1)
+                                      : Colors.grey,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
                                   isAktif ? 'Aktif' : 'Nonaktif',
-                                  style: const TextStyle(color: Colors.white, fontSize: 11),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                  ),
                                   textAlign: TextAlign.center,
                                 ),
                               ),
                             ),
-                            // 5. Tombol Aksi Edit
                             Expanded(
                               flex: 1,
                               child: IconButton(
-                                icon: FaIcon(FontAwesomeIcons.penToSquare, color: Preset.primaryColor, size: 18),
+                                icon: FaIcon(
+                                  FontAwesomeIcons.penToSquare,
+                                  color: Preset.primaryColor,
+                                  size: 18,
+                                ),
                                 onPressed: () async {
                                   final result = await Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => UbahStatusPage(mahasiswa: mhs),
+                                      builder: (context) =>
+                                          UbahStatusPage(mahasiswa: mhs),
                                     ),
                                   );
                                   if (result == true) {

@@ -48,19 +48,13 @@ class _StatusFormState extends State<StatusForm> {
       _isLoading = true;
     });
 
-    // FIX 1: Ambil data ID Kategori bawaan mahasiswa jika ada, atau gunakan default KAT056 (Gol 1)
-    // Jangan lakukan split('|') dari field nama prodi string.
     String idKategori = 'KAT056'; 
     String semester = '1';
     String beasiswa = 'Tidak';
-
-    // FIX 2: Kirim ID Utama Mahasiswa (widget.mahasiswa.id) untuk idKeuangan, 
-    // namun cari tahu ID Mahasiswa yang digunakan oleh API Keuangan.
-    // Berdasarkan parameter updateStatus: (idKeuangan, idMahasiswa, statusBaru)
     bool isSuccess = await _statusService.updateStatus(
-      widget.mahasiswa.id,          // idKeuangan (ID_KEUANGAN_MHS dari database)
-      widget.mahasiswa.id,          // idMahasiswa (Pastikan mengirim id_mahasiswa berupa UUID/String panjang)
-      _selectedStatus!,             // 'AKTIF' atau 'NONAKTIF'
+      widget.mahasiswa.id,
+      widget.mahasiswa.id,
+      _selectedStatus!,             
       idKategori: idKategori,
       semester: semester,
       beasiswa: beasiswa,
@@ -96,7 +90,6 @@ class _StatusFormState extends State<StatusForm> {
       );
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
       
-      // Refresh state provider agar tabel di halaman sebelumnya ikut terupdate
       Provider.of<StatusProvider>(context, listen: false).fetchStatusMahasiswa();
       
       Navigator.of(context).pop(true);

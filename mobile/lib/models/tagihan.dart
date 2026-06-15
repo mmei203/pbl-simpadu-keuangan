@@ -49,9 +49,7 @@ class TagihanModel {
     final int nomorCicilan =
         int.tryParse(json['NOMOR_CICILAN']?.toString() ?? '0') ?? 0;
 
-    // Terbayar = nominal cicilan × cicilan ke
     final double terbayar = nominalCicilan * nomorCicilan;
-    // Sisa = total - terbayar
     final double sisa = total - terbayar;
 
     return TagihanModel(

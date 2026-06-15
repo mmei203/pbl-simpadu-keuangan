@@ -24,16 +24,15 @@ class UserService {
 
       if (response.statusCode != 200) return null;
 
-      // 1. AMBIL ACCESS_TOKEN DARI DALAM OBJEK 'DATA' SECARA PASTI 🎯
       if (jsonResponse['data'] != null && jsonResponse['data']['access_token'] != null) {
         final String accessToken = jsonResponse['data']['access_token'];
         
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', accessToken); // Tetap simpan dengan key 'token' agar ukt_service tidak perlu diubah
+        await prefs.setString('token', accessToken);
         
-        debugPrint("✅ Token JWT Berhasil Disimpan dari access_token!");
+        debugPrint("Token JWT Berhasil Disimpan dari access_token!");
       } else {
-        debugPrint("⚠️ WARNING: access_token tidak ditemukan di dalam objek data.");
+        debugPrint("WARNING: access_token tidak ditemukan di dalam objek data.");
       }
 
       return UserResponse.fromJson(jsonResponse['data']);

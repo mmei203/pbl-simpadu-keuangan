@@ -138,7 +138,6 @@ class _PembayaranFormState extends State<PembayaranForm> {
         ),
       );
 
-      // Buat entri history dan simpan via HistoryProvider
       final Object nomorCicilanBaru =
           payload['NOMOR_CICILAN'] ?? widget.tagihan.nomorCicilan ?? 0;
       final String tipeHistory =
@@ -177,7 +176,6 @@ class _PembayaranFormState extends State<PembayaranForm> {
           listen: false,
         ).addHistory(historyEntry);
       } catch (e) {
-        // jangan crash app jika penyimpanan history gagal
       }
 
       provider.fetchTagihan();

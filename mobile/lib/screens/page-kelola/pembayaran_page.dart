@@ -75,7 +75,6 @@ class _PembayaranPageState extends State<PembayaranPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Re-implementasi komponen search agar terhubung langsung dengan state pencarian NIM/Nama/Prodi
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
@@ -185,7 +184,6 @@ class _PembayaranPageState extends State<PembayaranPage> {
             ),
             const SizedBox(height: 8),
 
-            // Body Tabel dengan filter pencarian nim, nama, dan prodi
             Expanded(
               child: Consumer<PembayaranProvider>(
                 builder: (context, provider, child) {
@@ -193,7 +191,6 @@ class _PembayaranPageState extends State<PembayaranPage> {
                     return const Center(child: CircularProgressIndicator());
                   }
 
-                  // 🎯 PROSES EKSTRAKSI & FILTER DATA (NIM, Nama, Prodi)
                   final filteredList = provider.listTagihan.where((tagihan) {
                     final nimMhs = tagihan.nim.toLowerCase();
                     final namaMhs = tagihan.nama.toLowerCase();

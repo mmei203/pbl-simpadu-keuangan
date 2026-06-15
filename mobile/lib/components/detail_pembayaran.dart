@@ -6,7 +6,7 @@ class DetailPembayaran extends StatelessWidget {
   final String nama;
   final String metode;
   final double jumlahBayar;
-  final double biayaAdmin = 2000.0; // Ketetapan nilai default dari kamu
+  final double biayaAdmin = 2000.0;
 
   const DetailPembayaran({
     super.key,
@@ -18,7 +18,6 @@ class DetailPembayaran extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Operasi penjumlahan matematika reaktif: Jumlah Bayar + Biaya Admin
     final double totalTransaksi = jumlahBayar + biayaAdmin;
 
     return AlertDialog(
@@ -34,13 +33,11 @@ class DetailPembayaran extends StatelessWidget {
           const Text('Transaksi Berhasil', style: TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
-      // Menggunakan SingleChildScrollView untuk mencegah overflow layout error
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Tanggal
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -50,7 +47,6 @@ class DetailPembayaran extends StatelessWidget {
             ),
             const SizedBox(height: 18),
 
-            // 2. Nama Mahasiswa
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -60,7 +56,6 @@ class DetailPembayaran extends StatelessWidget {
             ),
             const SizedBox(height: 18),
 
-            // 3. Metode Pembayaran
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -70,7 +65,6 @@ class DetailPembayaran extends StatelessWidget {
             ),
             const SizedBox(height: 18),
 
-            // 4. Jumlah Dibayar
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -80,7 +74,6 @@ class DetailPembayaran extends StatelessWidget {
             ),
             const SizedBox(height: 18),
 
-            // 5. Biaya admin
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -90,7 +83,6 @@ class DetailPembayaran extends StatelessWidget {
             ),
             const SizedBox(height: 18),
 
-            // 6. Total (Hasil Operasi Pertambahan)
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -103,7 +95,6 @@ class DetailPembayaran extends StatelessWidget {
             ),
             const SizedBox(height: 25),
 
-            // 7. Cetak btn
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
