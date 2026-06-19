@@ -98,7 +98,7 @@
       </div>
     </section>
 
-    <div v-if="isModalOpen" class="modal-overlay no-print" @click.self="tutupModalDetail">
+    <div v-if="isModalOpen" class="modal-overlay" @click.self="tutupModalDetail">
       <div class="modal-content print-area">
         <div class="invoice-header">
           <div class="invoice-title">
@@ -144,11 +144,24 @@
           </div>
         </div>
 
+        <div class="invoice-signatures">
+          <div class="signature-col">
+            <p>Mahasiswa,</p>
+            <div class="signature-space"></div>
+            <p class="signature-name"><strong>{{ detailTerpilih?.nama_mahasiswa || '-' }}</strong></p>
+          </div>
+          <div class="signature-col">
+            <p>Admin Keuangan,</p>
+            <div class="signature-space"></div>
+            <p class="signature-name"><strong>_____________________</strong></p>
+          </div>
+        </div>
+
         <div class="modal-actions no-print">
           <button @click="tutupModalDetail" class="btn-tutup">Tutup</button>
           <button @click="cetakInvoice" class="btn-cetak">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h10.5M6.75 17.25h10.5M4.5 9h15m-15 4.5h15" /></svg>
-            Cetak Transkrip
+            Cetak Bukti
           </button>
         </div>
       </div>
@@ -373,41 +386,74 @@ onMounted(() => {
 .total-box { display: flex; justify-content: space-between; align-items: center; }
 .total-box span { font-size: 14px; color: #64748b; font-weight: 500; }
 .total-box h3 { font-size: 20px; color: #1e3a8a; margin: 0; font-weight: 700; }
+
+/* Tambahan CSS Kolom Tanda Tangan */
+.invoice-signatures { display: flex; justify-content: space-between; margin-top: 35px; padding: 0 5px; margin-bottom: 15px; }
+.signature-col { text-align: center; width: 180px; font-size: 13px; color: #334155; }
+.signature-space { height: 65px; }
+.signature-name { font-size: 13px; color: #1e293b; border-top: 1px solid transparent; }
+
 .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
-.btn-tutup { background: white; color: #64748b; border: 1px solid #e2e8f0; padding: 10px 18px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+.btn-tutup { background: white; color: #64748b; border: 1px solid #e2e2f0; padding: 10px 18px; border-radius: 10px; font-weight: 600; cursor: pointer; }
 .btn-tutup:hover { background: #f8fafc; }
 .btn-cetak { background: #1e3a8a; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 600; display: flex; align-items: center; gap: 8px; cursor: pointer; }
 .btn-cetak svg { width: 18px; height: 18px; }
 .btn-cetak:hover { background: #172554; }
+</style>
 
-/* CSS KHUSUS UNTUK PRINT */
+<style>
+/* CSS GLOBAL KHUSUS PRINT - MEMAKSA 1 HALAMAN CLEAN & ANTI-BUG DUPLIKAT */
 @media print {
-  /* Sembunyikan seluruh elemen di body */
-  body * {
-    visibility: hidden;
-  }
-  
-  /* Hanya tampilkan elemen yang ada di dalam modal invoice (print-area) */
-  .print-area, .print-area * {
-    visibility: visible;
-  }
-  
-  /* Posisikan modal invoice agar memenuhi kertas print */
-  .print-area {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    max-width: 100%;
-    margin: 0;
-    padding: 0;
-    box-shadow: none;
-    border-radius: 0;
+  html, body {
+    height: 100% !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
-  /* Sembunyikan elemen modal yang tidak perlu di-print (contoh: tombol) */
-  .no-print {
+  /* Sembunyikan TOTAL seluruh elemen di aplikasi web */
+  body * {
+    visibility: hidden !important;
+  }
+  
+  /* TAMPILKAN HANYA area invoice (.print-area) beserta isinya */
+  .print-area, .print-area * {
+    visibility: visible !important;
+  }
+  
+  /* Sembunyikan elemen no-print bawaan web secara total */
+  .no-print, .modal-actions, .topbar, .filter-card, .table-card {
     display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Reset layouting modal overlay agar tidak fixed/melayang saat dicetak */
+  .modal-overlay {
+    position: static !important;
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: none !important;
+  }
+  
+  /* Tarik area invoice pas ke posisi pojok kiri atas kertas cetak */
+  .print-area {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: 100% !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    box-shadow: none !important;
+    border: none !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 }
 </style>
