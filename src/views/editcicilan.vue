@@ -26,100 +26,58 @@
           
           <div class="form-column">
             <div class="form-group">
-              <label for="nim">NIM</label>
-              <input 
-                type="text" 
-                id="nim" 
-                v-model="form.nim" 
-                placeholder="C030324077" 
-                required 
-              />
+              <label for="invoice">No Invoice</label>
+              <input type="text" id="invoice" v-model="form.NO_INVOICE" readonly class="readonly-input" />
             </div>
             
             <div class="form-group">
-              <label for="nama">Nama Mahasiswa</label>
-              <input 
-                type="text" 
-                id="nama" 
-                v-model="form.nama" 
-                placeholder="Budi Siregar" 
-                required 
-              />
+              <label for="nama-tagihan">Nama Tagihan</label>
+              <input type="text" id="nama-tagihan" v-model="form.NAMA_TAGIHAN" required />
             </div>
 
             <div class="form-group">
-              <label for="jatuh-tempo">Jatuh tempo</label>
-              <input 
-                type="date" 
-                id="jatuh-tempo" 
-                v-model="form.jatuhTempo" 
-                required 
-              />
+              <label for="jatuh-tempo">Jatuh Tempo</label>
+              <input type="date" id="jatuh-tempo" v-model="form.TGL_JATUH_TEMPO" required />
             </div>
           </div>
 
           <div class="form-column">
             <div class="form-group">
-              <label for="total-ukt">Total UKT</label>
-              <input 
-                type="text" 
-                id="total-ukt" 
-                v-model="form.totalUkt" 
-                placeholder="Rp. 3.000.000" 
-                required
-              />
+              <label for="total-tagihan">Total Tagihan</label>
+              <input type="number" id="total-tagihan" v-model="form.TOTAL_TAGIHAN" required />
             </div>
 
             <div class="form-group">
-              <label for="terbayar">Terbayar</label>
-              <input 
-                type="text" 
-                id="terbayar" 
-                v-model="form.terbayar" 
-                placeholder="Rp. 1.500.000" 
-                required
-              />
+              <label for="nominal-cicilan">Nominal Cicilan</label>
+              <input type="number" id="nominal-cicilan" v-model="form.NOMINAL_CICILAN" required />
             </div>
 
             <div class="form-group">
-              <label for="sisa">Sisa</label>
-              <input 
-                type="text" 
-                id="sisa" 
-                v-model="form.sisa" 
-                placeholder="Rp. 1.500.000" 
-                required
-              />
-            </div>
-          </div>
-
-          <div class="form-column">
-            <div class="form-group">
-              <label for="metode">Metode pembayaran</label>
-              <select id="metode" v-model="form.metode" required>
-                <option value="BTN">BTN</option>
-                <option value="Transfer Bank">Transfer Bank</option>
-                <option value="VA">VA</option>
-                <option value="E-Wallet">E-Wallet</option>
+              <label for="status-bayar">Status Bayar</label>
+              <select id="status-bayar" v-model="form.STATUS_BAYAR" required>
+                <option value="LUNAS">LUNAS</option>
+                <option value="BELUM BAYAR">BELUM BAYAR</option>
+                <option value="CICIL">CICIL</option>
               </select>
             </div>
+          </div>
+
+          <div class="form-column">
+            <div class="form-group">
+              <label for="cicilan-ke">Cicilan Ke (Nomor Cicilan)</label>
+              <input type="number" id="cicilan-ke" v-model="form.NOMOR_CICILAN" required />
+            </div>
 
             <div class="form-group">
-              <label for="cicilan-ke">Cicilan ke</label>
-              <input 
-                type="number" 
-                id="cicilan-ke" 
-                v-model="form.cicilanKe" 
-                placeholder="2" 
-                required
-              />
+              <label for="total-cicilan">Total Kapasitas Tenor</label>
+              <input type="number" id="total-cicilan" v-model="form.TOTAL_CICILAN" required />
             </div>
           </div>
 
         </div>
 
         <div class="form-footer">
-          <button type="submit" class="btn-simpan">Simpan</button>
+          <button type="submit" class="btn-simpan">Simpan Perubahan</button>
         </div>
       </form>
     </section>
@@ -127,140 +85,115 @@
 </template>
 
 <script setup>
-import { reactive } from "vue";
+import { reactive, onMounted } from "vue";
+import axios from "axios";
 
 const props = defineProps({
-  nim: {
+  idTagihan: {
     type: String,
-    default: ""
+    required: true
   }
 });
 
-// Mengisi data default (Pre-filled) sesuai dengan contoh gambar ubahtele
+const API_TOKEN = localStorage.getItem("token") || "";
+const BASE_URL_TAGIHAN = "https://api-keuangan-4a.akufarish.my.id:8873/api/tagihan";
+
+const apiConfig = {
+  headers: {
+    'Accept': 'application/json',
+    'Authorization': `Bearer ${API_TOKEN}`
+  }
+};
+
 const form = reactive({
-  nim: props.nim || "C030324077",
-  nama: "Budi Siregar",
-  jatuhTempo: "2027-01-23", // Format YYYY-MM-DD agar dibaca oleh input type="date"
-  totalUkt: "Rp. 3.000.000",
-  terbayar: "Rp. 1.500.000",
-  sisa: "Rp. 1.500.000",
-  metode: "BTN",
-  cicilanKe: 2
+  ID_TAGIHAN: "",
+  NO_INVOICE: "",
+  NAMA_TAGIHAN: "",
+  TGL_JATUH_TEMPO: "",
+  TOTAL_TAGIHAN: 0,
+  NOMINAL_CICILAN: 0,
+  STATUS_BAYAR: "BELUM BAYAR",
+  NOMOR_CICILAN: 1,
+  TOTAL_CICILAN: 2
 });
 
-const updateCicilan = () => {
-  console.log("Data Cicilan Berhasil Diperbarui:", form);
-  alert("Perubahan data cicilan berhasil disimpan!");
+const fetchDetailCicilan = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL_TAGIHAN}/${props.idTagihan}`, apiConfig);
+    if (response.data && response.data.data) {
+      const item = response.data.data;
+      Object.assign(form, {
+        ID_TAGIHAN: item.ID_TAGIHAN,
+        NO_INVOICE: item.NO_INVOICE,
+        NAMA_TAGIHAN: item.NAMA_TAGIHAN,
+        TGL_JATUH_TEMPO: item.TGL_JATUH_TEMPO ? item.TGL_JATUH_TEMPO.split('T')[0] : "",
+        TOTAL_TAGIHAN: Math.round(parseFloat(item.TOTAL_TAGIHAN || 0)),
+        NOMINAL_CICILAN: Math.round(parseFloat(item.NOMINAL_CICILAN || 0)),
+        STATUS_BAYAR: item.STATUS_BAYAR,
+        NOMOR_CICILAN: item.NOMOR_CICILAN,
+        TOTAL_CICILAN: item.TOTAL_CICILAN
+      });
+    }
+  } catch (error) {
+    console.error("Gagal memuat detail cicilan:", error);
+  }
+};
+
+onMounted(() => {
+  if (props.idTagihan) {
+    fetchDetailCicilan();
+  }
+});
+
+const updateCicilan = async () => {
+  try {
+    const payload = {
+      NAMA_TAGIHAN: form.NAMA_TAGIHAN,
+      TOTAL_TAGIHAN: form.TOTAL_TAGIHAN,
+      TGL_JATUH_TEMPO: form.TGL_JATUH_TEMPO,
+      STATUS_BAYAR: form.STATUS_BAYAR,
+      NOMOR_CICILAN: form.NOMOR_CICILAN,
+      TOTAL_CICILAN: form.TOTAL_CICILAN,
+      NOMINAL_CICILAN: form.NOMINAL_CICILAN,
+      POTONGAN: 0
+    };
+
+    const response = await axios.put(`${BASE_URL_TAGIHAN}/${form.ID_TAGIHAN}`, payload, apiConfig);
+
+    if (response.status === 200) {
+      alert("Perubahan data cicilan berhasil disimpan di server!");
+    }
+  } catch (error) {
+    console.error("Data Cicilan Gagal Diperbarui:", error);
+    alert("Gagal memperbarui data cicilan.");
+  }
 };
 </script>
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
-.main-content {
-  padding: 25px;
-  flex: 1;
-  font-family: 'Poppins', sans-serif;
-  background-color: #f8fafc;
-  min-height: 100vh;
-}
-
-/* TOPBAR */
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 35px;
-}
+.main-content { padding: 25px; flex: 1; font-family: 'Poppins', sans-serif; background-color: #f8fafc; min-height: 100vh; }
+.topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; }
 .breadcrumb { font-size: 12px; color: #64748b; margin-bottom: 5px; }
 .topbar h1 { font-size: 26px; font-weight: 700; color: #1e293b; margin: 0; letter-spacing: -0.5px; }
 .subtitle { font-size: 14px; color: #64748b; margin-top: 2px; }
 
-/* PROFILE SECTION */
 .profile-section { display: flex; align-items: center; gap: 15px; }
-.notif-btn {
-  background: white; border: 1px solid #e2e8f0; width: 42px; height: 42px;
-  border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-}
-.profile-blue {
-  background: #1e3a8a; color: white; padding: 8px 18px;
-  border-radius: 12px; display: flex; align-items: center; gap: 12px; font-size: 13px; font-weight: 500;
-}
+.notif-btn { background: white; border: 1px solid #e2e8f0; width: 42px; height: 42px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.profile-blue { background: #1e3a8a; color: white; padding: 8px 18px; border-radius: 12px; display: flex; align-items: center; gap: 12px; font-size: 13px; font-weight: 500; }
 .profile-blue img { width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); }
 
-/* FORM CARD */
-.form-card {
-  background: transparent;
-}
+.form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-bottom: 25px; }
+.form-column { display: flex; flex-direction: column; gap: 18px; }
+.form-group { display: flex; flex-direction: column; gap: 8px; }
+.form-group label { font-size: 14px; font-weight: 500; color: #1e293b; }
+.form-group input, .form-group select { padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: 10px; background-color: white; font-size: 14px; font-family: 'Poppins', sans-serif; color: #334155; outline: none; }
+.form-group input:focus, .form-group select:focus { border-color: #1e3a8a; }
+.readonly-input { background-color: #f8fafc !important; color: #64748b; cursor: not-allowed; border-style: dashed !important; }
+.btn-simpan { background-color: #1e3a8a; color: white; border: none; padding: 10px 32px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; }
+.btn-simpan:hover { background-color: #1e40af; }
 
-/* 3-COLUMN GRID LAYOUT */
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 30px;
-  margin-bottom: 25px;
-}
-
-.form-column {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.form-group label {
-  font-size: 14px;
-  font-weight: 500;
-  color: #1e293b;
-}
-
-.form-group input, .form-group select {
-  padding: 12px 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  background-color: white;
-  font-size: 14px;
-  font-family: 'Poppins', sans-serif;
-  color: #334155;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.form-group input:focus, .form-group select:focus {
-  border-color: #1e3a8a;
-}
-
-/* BUTTON ACTION */
-.form-footer {
-  margin-top: 10px;
-}
-
-.btn-simpan {
-  background-color: #1e3a8a;
-  color: white;
-  border: none;
-  padding: 10px 32px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.btn-simpan:hover {
-  background-color: #1e40af;
-}
-
-/* Responsive Breakpoints */
-@media (max-width: 1024px) {
-  .form-grid { grid-template-columns: repeat(2, 1fr); gap: 25px; }
-}
-@media (max-width: 640px) {
-  .form-grid { grid-template-columns: 1fr; gap: 20px; }
-}
+@media (max-width: 1024px) { .form-grid { grid-template-columns: repeat(2, 1fr); gap: 25px; } }
+@media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; gap: 20px; } }
 </style>
