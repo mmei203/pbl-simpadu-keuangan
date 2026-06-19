@@ -1,6 +1,6 @@
 <template>
   <div class="main-content">
-    <header class="topbar">
+    <header class="topbar no-print">
       <div>
         <p class="breadcrumb">Manajemen Keuangan > History Pembayaran</p>
         <h1>History Pembayaran</h1>
@@ -10,7 +10,7 @@
       </div>
     </header>
 
-    <section class="filter-card">
+    <section class="filter-card no-print">
       <div class="search-box">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -43,11 +43,10 @@
       </div>
     </section>
 
-    <section class="table-card">
+    <section class="table-card no-print">
       <div class="table-responsive">
-
         <div v-if="isLoading" class="empty-state">
-          Memuat riwayat pembayaran mahasiswa, mohon tunggu sebentar...
+          Memuat seluruh riwayat pembayaran mahasiswa, mohon tunggu sebentar...
         </div>
         <div v-else-if="errorMessage" class="empty-state error-text">
           {{ errorMessage }}
@@ -65,45 +64,95 @@
               <th>Nominal</th>
               <th>Tanggal</th>
               <th>Status</th>
+              <th>Aksi</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="(item, index) in dataTerfilter" :key="item.ID_TAGIHAN || index">
               <td>{{ index + 1 }}</td>
-
               <td class="font-bold">{{ item.nim }}</td>
-
               <td class="nama-mhs">{{ item.nama_mahasiswa }}</td>
-
-              <td>
-                <span class="aktivitas-text">{{ labelAktivitas(item) }}</span>
-              </td>
-
+              <td><span class="aktivitas-text">{{ labelAktivitas(item) }}</span></td>
               <td>{{ item.NAMA_TAGIHAN || "-" }}</td>
-
               <td>
                 <span class="cicilan-badge">
                   {{ item.NOMOR_CICILAN || "-" }}/{{ item.TOTAL_CICILAN || "-" }}
                 </span>
               </td>
-
               <td class="nominal-text">{{ formatRupiah(item.NOMINAL_CICILAN) }}</td>
-
               <td>{{ formatTanggal(item.TGL_BAYAR || item.TGL_TAGIHAN) }}</td>
-
               <td>
                 <span :class="['badge', statusBayarClass(item.STATUS_BAYAR)]">
                   {{ formatStatusBayar(item.STATUS_BAYAR) }}
                 </span>
               </td>
+              <td>
+                <button @click="bukaModalDetail(item)" class="btn-detail">Detail</button>
+              </td>
             </tr>
             <tr v-if="dataTerfilter && dataTerfilter.length === 0">
-              <td colspan="9" class="empty-state">Riwayat pembayaran tidak ditemukan</td>
+              <td colspan="10" class="empty-state">Riwayat pembayaran tidak ditemukan</td>
             </tr>
           </tbody>
         </table>
       </div>
     </section>
+
+    <div v-if="isModalOpen" class="modal-overlay no-print" @click.self="tutupModalDetail">
+      <div class="modal-content print-area">
+        <div class="invoice-header">
+          <div class="invoice-title">
+            <h2>Bukti Pembayaran SIMPADU</h2>
+            <p>No. Invoice: <strong>{{ detailTerpilih?.NO_INVOICE || '-' }}</strong></p>
+          </div>
+          <div class="invoice-logo no-print">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="logo-icon"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z" /></svg>
+          </div>
+        </div>
+
+        <div class="invoice-body">
+          <div class="info-row">
+            <span class="label">Nama Mahasiswa</span>
+            <span class="value">: {{ detailTerpilih?.nama_mahasiswa }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">NIM</span>
+            <span class="value">: {{ detailTerpilih?.nim }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Jenis Tagihan</span>
+            <span class="value">: {{ detailTerpilih?.NAMA_TAGIHAN || '-' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Pembayaran Ke</span>
+            <span class="value">: {{ detailTerpilih?.NOMOR_CICILAN || '-' }} dari {{ detailTerpilih?.TOTAL_CICILAN || '-' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Tanggal Bayar</span>
+            <span class="value">: {{ formatTanggal(detailTerpilih?.TGL_BAYAR) || '-' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Status</span>
+            <span class="value">: <strong>{{ formatStatusBayar(detailTerpilih?.STATUS_BAYAR) }}</strong></span>
+          </div>
+        </div>
+
+        <div class="invoice-footer">
+          <div class="total-box">
+            <span>Total Dibayar</span>
+            <h3>{{ formatRupiah(detailTerpilih?.NOMINAL_CICILAN) }}</h3>
+          </div>
+        </div>
+
+        <div class="modal-actions no-print">
+          <button @click="tutupModalDetail" class="btn-tutup">Tutup</button>
+          <button @click="cetakInvoice" class="btn-cetak">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h10.5M6.75 17.25h10.5M4.5 9h15m-15 4.5h15" /></svg>
+            Cetak Transkrip
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -118,7 +167,10 @@ const selectedStatus = ref("");
 const isLoading = ref(false);
 const errorMessage = ref("");
 
-// Data mentah hasil join tagihan + mahasiswa (belum difilter search/status)
+// State Modal
+const isModalOpen = ref(false);
+const detailTerpilih = ref(null);
+
 const riwayatPembayaran = ref([]);
 
 async function fetchHistoryPembayaran() {
@@ -131,7 +183,6 @@ async function fetchHistoryPembayaran() {
       ...(token && { Authorization: `Bearer ${token}` }),
     };
 
-    // Ambil semua tagihan (riwayat transaksi) + semua mahasiswa (untuk join nama/NIM), paralel
     const [resTagihan, resMahasiswa] = await Promise.all([
       apiKeuangan.get(`https://api-keuangan-4a.akufarish.my.id:8873/api/tagihan`, {
         headers: headersConfig,
@@ -153,7 +204,6 @@ async function fetchHistoryPembayaran() {
       return;
     }
 
-    // Buat lookup map ID_MAHASISWA -> { nim, nama } biar pencarian nama/NIM cepat (bukan .find() berulang)
     const mapMahasiswa = {};
     if (Array.isArray(listMahasiswa)) {
       listMahasiswa.forEach((mhs) => {
@@ -167,7 +217,6 @@ async function fetchHistoryPembayaran() {
       });
     }
 
-    // Setiap baris tagihan = satu transaksi/cicilan -> ini yang jadi 1 baris di history
     riwayatPembayaran.value = listTagihan.map((tagihan) => {
       const idMhs = String(tagihan.keuangan_mahasiswa?.ID_MAHASISWA || "").trim().toLowerCase();
       const infoMhs = mapMahasiswa[idMhs] || { nim: "-", nama_mahasiswa: "Mahasiswa Tidak Ditemukan" };
@@ -179,7 +228,6 @@ async function fetchHistoryPembayaran() {
       };
     });
 
-    // Urutkan riwayat dari TGL_BAYAR/TGL_TAGIHAN paling baru ke paling lama
     riwayatPembayaran.value.sort((a, b) => {
       const tglA = new Date(a.TGL_BAYAR || a.TGL_TAGIHAN || 0).getTime();
       const tglB = new Date(b.TGL_BAYAR || b.TGL_TAGIHAN || 0).getTime();
@@ -187,14 +235,13 @@ async function fetchHistoryPembayaran() {
     });
 
   } catch (error) {
-    console.error("Gagal memuat history pembayaran:", error);
+    console.error("Gagal memuat history pembayaran global:", error);
     errorMessage.value = "Gagal memuat riwayat pembayaran mahasiswa.";
   } finally {
     isLoading.value = false;
   }
 }
 
-// Filter di frontend: search by nama/NIM + filter status, dari data yang sudah di-fetch sekali
 const dataTerfilter = computed(() => {
   let hasil = riwayatPembayaran.value;
 
@@ -217,7 +264,22 @@ const dataTerfilter = computed(() => {
   return hasil;
 });
 
-// Format tanggal jadi "15 Jun 2026", kalau tanggal kosong/null tampilkan "-"
+// Aksi Modal
+const bukaModalDetail = (item) => {
+  detailTerpilih.value = item;
+  isModalOpen.value = true;
+};
+
+const tutupModalDetail = () => {
+  isModalOpen.value = false;
+  detailTerpilih.value = null;
+};
+
+const cetakInvoice = () => {
+  window.print();
+};
+
+// Formatter
 const formatTanggal = (tgl) => {
   if (!tgl) return "-";
   const date = new Date(tgl);
@@ -225,10 +287,6 @@ const formatTanggal = (tgl) => {
   return date.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
 };
 
-// Label aktivitas naratif untuk satu baris histori:
-// - Kalau TGL_BAYAR ada -> ini histori "pembayaran diterima" (uang sudah masuk)
-// - Kalau TGL_BAYAR kosong -> ini histori "tagihan diterbitkan", belum ada pembayaran
-// Dipakai supaya tabel tidak menyesatkan (tidak bilang "dibayar" padahal cuma tagihan baru terbit)
 const labelAktivitas = (item) => {
   const sudahBayar = !!item.TGL_BAYAR;
   const isCicilan = Number(item.TOTAL_CICILAN) > 1;
@@ -241,14 +299,12 @@ const labelAktivitas = (item) => {
   return "Tagihan diterbitkan";
 };
 
-// Format angka jadi Rupiah, contoh: 3900000 -> "Rp 3.900.000"
 const formatRupiah = (nominal) => {
   const angka = Number(nominal || 0);
   if (isNaN(angka)) return "-";
   return "Rp " + angka.toLocaleString("id-ID");
 };
 
-// Formatter Teks Status Pembayaran
 const formatStatusBayar = (status) => {
   const s = String(status || "").toUpperCase().trim();
   if (s === "LUNAS") return "Lunas";
@@ -256,7 +312,6 @@ const formatStatusBayar = (status) => {
   return "Belum Bayar";
 };
 
-// Class Styling Badge Status Pembayaran
 const statusBayarClass = (status) => {
   const s = String(status || "").toUpperCase().trim();
   if (s === "LUNAS") return "badge-success";
@@ -279,9 +334,9 @@ onMounted(() => {
 .filter-card { background: white; padding: 18px 20px; border-radius: 16px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; gap: 20px; }
 .search-box { position: relative; flex: 1; max-width: 400px; }
 .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; color: #94a3b8; }
-.search-box input { width: 100%; padding: 11px 15px 11px 42px; border: 1px solid #e2e8f0; border-radius: 12px; outline: none; font-size: 13px; }
+.search-box input { width: 100%; padding: 11px 15px 11px 42px; border: 1px solid #e2e8f0; border-radius: 12px; outline: none; font-size: 13px; font-family: "Poppins", sans-serif; }
 .filter-group { display: flex; gap: 12px; }
-.filter-group select { padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 13px; background: #f8fafc; }
+.filter-group select { padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 13px; background: #f8fafc; font-family: "Poppins", sans-serif; cursor: pointer; }
 .table-card { background: white; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; }
 .table-responsive { overflow-x: auto; }
 .data-table { width: 100%; border-collapse: collapse; text-align: left; }
@@ -296,6 +351,63 @@ onMounted(() => {
 .badge-success { background-color: #f0fdf4; color: #16a34a; }
 .badge-warning { background-color: #fffbeb; color: #d97706; }
 .badge-danger { background-color: #fef2f2; color: #dc2626; }
-.empty-state { text-align: center; padding: 50px; color: #94a3b8; }
+.empty-state { text-align: center; padding: 50px; color: #94a3b8; font-size: 14px; }
 .error-text { color: #ef4444; }
+
+/* Tombol Aksi */
+.btn-detail { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; font-family: "Poppins", sans-serif; }
+.btn-detail:hover { background: #2563eb; color: white; }
+
+/* Modal Styling */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+.modal-content { background: white; width: 100%; max-width: 500px; border-radius: 20px; padding: 30px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); position: relative; }
+.invoice-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px dashed #e2e8f0; padding-bottom: 20px; margin-bottom: 20px; }
+.invoice-title h2 { font-size: 18px; font-weight: 700; color: #1e293b; margin: 0 0 5px 0; }
+.invoice-title p { font-size: 13px; color: #64748b; margin: 0; }
+.logo-icon { width: 40px; height: 40px; color: #1e3a8a; }
+.invoice-body { display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px; }
+.info-row { display: grid; grid-template-columns: 140px 1fr; font-size: 14px; }
+.info-row .label { color: #64748b; }
+.info-row .value { color: #1e293b; font-weight: 500; }
+.invoice-footer { background: #f8fafc; padding: 15px 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #f1f5f9; }
+.total-box { display: flex; justify-content: space-between; align-items: center; }
+.total-box span { font-size: 14px; color: #64748b; font-weight: 500; }
+.total-box h3 { font-size: 20px; color: #1e3a8a; margin: 0; font-weight: 700; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.btn-tutup { background: white; color: #64748b; border: 1px solid #e2e8f0; padding: 10px 18px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+.btn-tutup:hover { background: #f8fafc; }
+.btn-cetak { background: #1e3a8a; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 600; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.btn-cetak svg { width: 18px; height: 18px; }
+.btn-cetak:hover { background: #172554; }
+
+/* CSS KHUSUS UNTUK PRINT */
+@media print {
+  /* Sembunyikan seluruh elemen di body */
+  body * {
+    visibility: hidden;
+  }
+  
+  /* Hanya tampilkan elemen yang ada di dalam modal invoice (print-area) */
+  .print-area, .print-area * {
+    visibility: visible;
+  }
+  
+  /* Posisikan modal invoice agar memenuhi kertas print */
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  /* Sembunyikan elemen modal yang tidak perlu di-print (contoh: tombol) */
+  .no-print {
+    display: none !important;
+  }
+}
 </style>
