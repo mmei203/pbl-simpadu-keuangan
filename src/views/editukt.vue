@@ -25,28 +25,25 @@
 
           <div class="form-group">
             <label>Program Studi</label>
-            <input type="text" v-model="editForm.prodi" readonly class="readonly-input" />
-          </div>
-
-          <div class="form-group">
-            <label>Semester</label>
-            <input type="text" v-model="editForm.semester" readonly class="readonly-input" />
+            <input type="text" v-model="editForm.prodi_nama" readonly class="readonly-input" />
           </div>
 
           <div class="form-group full-width">
-            <label>Golongan UKT</label>
-            <!-- Loading state saat fetch kategori -->
+            <label>Golongan UKT (Maksimal Golongan 5)</label>
             <div v-if="isLoadingKategori" class="loading-kategori">Memuat daftar golongan UKT...</div>
             <select v-else v-model="editForm.id_kategori_ukt" required>
               <option value="">Pilih Golongan UKT</option>
               <option
-                v-for="kategori in listKategoriUkt"
-                :key="kategori.ID_KATEGORI"
-                :value="kategori.ID_KATEGORI"
+                v-for="kategori in filteredKategoriUkt"
+                :key="kategori.ID_KATEGORI || kategori.id"
+                :value="kategori.ID_KATEGORI || kategori.id"
               >
-                {{ kategori.NAMA_KATEGORI }} — Rp {{ formatRupiah(kategori.NOMINAL) }}
+                {{ kategori.GOLONGAN_UKT || kategori.golongan_ukt }} — Rp {{ formatRupiah(kategori.NOMINAL_UKT || kategori.NOMINAL || kategori.nominal) }}
               </option>
             </select>
+            <p v-if="filteredKategoriUkt.length === 0 && !isLoadingKategori" class="info-helper">
+              *Tidak ada golongan 1-5 yang pas untuk prodi ID: {{ editForm.prodi_id || 'Kosong' }}.
+            </p>
           </div>
         </div>
 
@@ -62,7 +59,7 @@
 </template>
 
 <script setup>
-import { reactive, watch, ref } from "vue";
+import { reactive, watch, ref, computed } from "vue";
 import axios from "axios";
 
 const props = defineProps({
@@ -81,18 +78,17 @@ const editForm = reactive({
   id_mahasiswa:    "",
   nama:            "",
   nim:             "",
-  prodi:           "",
+  prodi_nama:      "",
+  prodi_id:        "",
   semester:        "",
   id_kategori_ukt: "",
 });
 
-// Format angka ke Rupiah
 const formatRupiah = (nominal) => {
   if (!nominal) return "0";
   return Number(nominal).toLocaleString("id-ID");
 };
 
-// Fetch daftar kategori UKT dari API
 const fetchKategoriUkt = async () => {
   isLoadingKategori.value = true;
   try {
@@ -107,7 +103,6 @@ const fetchKategoriUkt = async () => {
       }
     );
 
-    // Handle berbagai struktur response
     const body = res.data;
     if (Array.isArray(body)) {
       listKategoriUkt.value = body;
@@ -119,14 +114,32 @@ const fetchKategoriUkt = async () => {
       listKategoriUkt.value = [];
     }
   } catch (error) {
-    console.error("Gagal fetch kategori UKT:", error);
+    console.error("Gagal fetch master kategori UKT:", error);
     listKategoriUkt.value = [];
   } finally {
     isLoadingKategori.value = false;
   }
 };
 
-// Isi form saat modal dibuka & fetch kategori
+const filteredKategoriUkt = computed(() => {
+  if (!listKategoriUkt.value || listKategoriUkt.value.length === 0) return [];
+
+  return listKategoriUkt.value.filter((kategori) => {
+    const namaGolongan = String(kategori.GOLONGAN_UKT || kategori.golongan_ukt || "").toLowerCase();
+    
+    const idProdiKategori = String(kategori.ID_PRODI || kategori.id_prodi || "").trim();
+    const idProdiMahasiswa = String(editForm.prodi_id || "").trim();
+
+    const matchAngka = namaGolongan.match(/\d+/);
+    const angkaGolongan = matchAngka ? parseInt(matchAngka[0], 10) : null;
+
+    const lolosGolongan = angkaGolongan !== null && angkaGolongan <= 5;
+    const lolosProdi = !idProdiMahasiswa || idProdiKategori === idProdiMahasiswa;
+
+    return lolosGolongan && lolosProdi;
+  });
+});
+
 watch(() => props.showEditModal, (isOpen) => {
   if (isOpen) {
     fetchKategoriUkt();
@@ -136,26 +149,33 @@ watch(() => props.showEditModal, (isOpen) => {
 watch(() => props.selectedData, (newVal) => {
   if (!newVal) return;
 
-  console.log("editukt selectedData:", newVal);
+  console.log("editukt menangkap selectedData:", newVal);
 
+  // Sesuaikan bagian ini agar mendeteksi ID_KEUANGAN_MHS terlebih dahulu
   const idKeuangan =
-    newVal.id           || newVal.ID           ||
-    newVal.id_keuangan  || newVal.ID_KEUANGAN  ||
-    newVal.keuangan_id;
+    newVal.ID_KEUANGAN_MHS ||
+    newVal.id_keuangan_mhs ||
+    newVal.keuangan_id     ||
+    newVal.id_keuangan     ||
+    newVal.ID_KEUANGAN     ||
+    null;
 
   const idMhs =
-    newVal.id_mahasiswa || newVal.ID_MAHASISWA ||
-    newVal.mahasiswa_id || newVal.MAHASISWA_ID;
+    newVal.id_mahasiswa || newVal.ID_MAHASISWA || newVal.mahasiswa_id || "";
+
+  // Sisa kode ke bawah tetap sama...
+  const prodiIdDidapat = newVal.id_prodi || newVal.prodi_id || newVal.PRODI_ID || newVal.prodi?.id || "";
+  const prodiNamaDidapat = newVal.prodi_clean || newVal.prodi?.nama || newVal.prodi?.name || newVal.prodi || "Teknik Informatika";
 
   Object.assign(editForm, {
     id:              idKeuangan || "",
     id_mahasiswa:    idMhs      || "",
-    nama:            newVal.nama || newVal.nama_mahasiswa || newVal.NAMA || "",
+    nama:            newVal.nama || newVal.NAMA || "",
     nim:             newVal.nim  || newVal.NIM  || "",
-    prodi:           newVal.prodi?.name || newVal.prodi_clean || newVal.prodi || "",
-    semester:        newVal.semester    || "",
-    // Preset golongan yang sudah ada jika field id_kategori_ukt tersedia
-    id_kategori_ukt: newVal.id_kategori_ukt || newVal.ID_KATEGORI_UKT || newVal.kategori_ukt_id || "",
+    prodi_nama:      prodiNamaDidapat,
+    prodi_id:        prodiIdDidapat,
+    semester:        newVal.semester || "1",
+    id_kategori_ukt: newVal.id_kategori_ukt || newVal.ID_KATEGORI_UKT || newVal.ID_KATEGORI || "",
   });
 }, { immediate: true });
 
@@ -165,10 +185,10 @@ const handleUpdate = async () => {
     return;
   }
 
-  // Gunakan id keuangan atau id mahasiswa sebagai endpoint
-  const idEndpoint = editForm.id || editForm.id_mahasiswa;
+  // Jika editForm.id kosong, gunakan id_mahasiswa atau nim agar request tetap terkirim ke API
+  const idEndpoint = editForm.id || editForm.id_mahasiswa || editForm.nim;
   if (!idEndpoint) {
-    alert("ID data tidak ditemukan, tidak bisa update.");
+    alert("ID Data tidak ditemukan. Mohon cek baris mahasiswa kembali.");
     return;
   }
 
@@ -176,11 +196,19 @@ const handleUpdate = async () => {
   try {
     const token = localStorage.getItem("token");
 
+    const payload = {
+      id_mahasiswa:    editForm.id_mahasiswa,
+      nim:             editForm.nim,
+      id_kategori_ukt: editForm.id_kategori_ukt,
+      ID_KATEGORI_UKT: editForm.id_kategori_ukt,
+      id_kategori:     editForm.id_kategori_ukt,
+      ID_KATEGORI:     editForm.id_kategori_ukt
+    };
+
+    // Catatan: Ganti URL di bawah ini ke `/api/kategori-ukt/${idEndpoint}` jika backend meminta endpoint tersebut
     await axios.put(
       `https://api-keuangan-4a.akufarish.my.id:8873/api/keuangan-mahasiswa/${idEndpoint}`,
-      {
-        id_kategori_ukt: editForm.id_kategori_ukt,
-      },
+      payload,
       {
         headers: {
           Accept: "application/json",
@@ -191,11 +219,11 @@ const handleUpdate = async () => {
     );
 
     alert("Golongan UKT berhasil diperbarui!");
-    emit("update", { ...editForm });
+    emit("update");
   } catch (error) {
     console.error("Gagal update UKT:", error);
-    const msg = error.response?.data?.message || "Gagal memperbarui data UKT. Coba lagi.";
-    alert(`Error: ${msg}`);
+    const msg = error.response?.data?.message || "Gagal memperbarui data UKT ke server API.";
+    alert(`Error: ${msg}\n\nSilakan cek tab Network (F12) untuk melihat detail error.`);
   } finally {
     isUpdating.value = false;
   }
@@ -212,52 +240,53 @@ const handleUpdate = async () => {
   font-family: 'Poppins', sans-serif;
 }
 .modal-card {
-  background: white; width: 90%; max-width: 600px;
+  background: white; width: 95%; max-width: 530px;
   border-radius: 20px; overflow: hidden;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  animation: slideUp 0.3s ease-out;
+  animation: slideUp 0.25s ease-out;
 }
 @keyframes slideUp {
-  from { transform: translateY(30px); opacity: 0; }
+  from { transform: translateY(20px); opacity: 0; }
   to   { transform: translateY(0);    opacity: 1; }
 }
 .modal-header {
-  padding: 22px 25px; border-bottom: 1px solid #f1f5f9;
+  padding: 20px 25px; border-bottom: 1px solid #f1f5f9;
   display: flex; justify-content: space-between; align-items: center;
   background: #f8fafc;
 }
 .header-title { display: flex; align-items: center; gap: 12px; }
 .header-icon  { width: 22px; color: #1e3a8a; }
-.modal-header h2 { font-size: 18px; font-weight: 700; color: #1e293b; margin: 0; }
-.close-btn { background: none; border: none; font-size: 28px; color: #94a3b8; cursor: pointer; }
+.modal-header h2 { font-size: 16px; font-weight: 700; color: #1e293b; margin: 0; }
+.close-btn { background: none; border: none; font-size: 26px; color: #94a3b8; cursor: pointer; line-height: 1; }
 .modal-form { padding: 25px; }
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .full-width { grid-column: span 2; }
-.form-group { display: flex; flex-direction: column; gap: 8px; }
-.form-group label { font-size: 13px; font-weight: 600; color: #475569; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group label { font-size: 12px; font-weight: 600; color: #475569; }
 .form-group input, .form-group select {
-  padding: 12px 14px; border: 1.5px solid #e2e8f0; border-radius: 12px;
-  font-size: 14px; font-family: 'Poppins', sans-serif; outline: none; transition: 0.2s;
-  background-color: #ffffff;
+  padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 12px;
+  font-size: 13px; font-family: 'Poppins', sans-serif; outline: none; transition: 0.2s;
+  background-color: #ffffff; color: #1e293b;
 }
 .form-group input:focus, .form-group select:focus {
   border-color: #1e3a8a; box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.08);
 }
-.readonly-input { background-color: #f8fafc !important; color: #64748b; cursor: not-allowed; border-style: dashed !important; }
+.readonly-input { background-color: #f8fafc !important; color: #64748b; cursor: not-allowed; border-style: dashed !important; font-weight: 500; }
 .loading-kategori {
-  padding: 12px 14px; border: 1.5px dashed #e2e8f0; border-radius: 12px;
-  font-size: 13px; color: #94a3b8; background: #f8fafc;
+  padding: 11px 14px; border: 1.5px dashed #e2e8f0; border-radius: 12px;
+  font-size: 12px; color: #94a3b8; background: #f8fafc;
 }
-.modal-footer { margin-top: 35px; display: flex; justify-content: flex-end; gap: 12px; }
+.info-helper { font-size: 11px; color: #ef4444; margin: 4px 0 0 2px; font-weight: 500; }
+.modal-footer { margin-top: 30px; display: flex; justify-content: flex-end; gap: 12px; }
 .btn-cancel {
-  padding: 12px 25px; border: 1.5px solid #e2e8f0; background: white;
-  border-radius: 12px; color: #64748b; font-weight: 600; cursor: pointer; transition: 0.2s;
+  padding: 10px 22px; border: 1.5px solid #e2e8f0; background: white;
+  border-radius: 12px; color: #64748b; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 13px;
 }
 .btn-update {
-  padding: 12px 30px; background: #1e3a8a; color: white; border: none;
-  border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.3s;
+  padding: 10px 26px; background: #1e3a8a; color: white; border: none;
+  border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 13px;
 }
-.btn-update:hover { background: #1e40af; transform: translateY(-1px); }
+.btn-update:hover { background: #1e40af; }
 .btn-cancel:hover { background: #f8fafc; color: #1e293b; }
-.btn-update:disabled, .btn-cancel:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.btn-update:disabled, .btn-cancel:disabled { opacity: 0.6; cursor: not-allowed; }
 </style>

@@ -70,7 +70,7 @@
               <td class="font-bold">{{ item.nim || "-" }}</td>
               <td class="nama-mhs">{{ item.nama || "-" }}</td>
               <td>
-                <div class="jurusan-text">{{ item.jurusan_clean?.name || item.jurusan_clean || "Teknik Elektro" }}</div>
+                <div class="jurusan-text">{{ item.jurusan_clean.nama || "Teknik Elektro" }}</div>
                 <div class="prodi-text">{{ item.prodi_clean || "D3 Teknik Informatika" }}</div>
               </td>
               <td>
@@ -123,7 +123,6 @@ const lastPage     = ref(1);
 const perPage      = ref(10);
 let searchTimeout  = null;
 
-// Modal state
 const showEditModal = ref(false);
 const dataForEdit   = ref(null);
 
@@ -134,7 +133,7 @@ const openEditModal = (item) => {
 
 const handleAfterUpdate = () => {
   showEditModal.value = false;
-  fetchDataUkt();
+  fetchDataUkt(); // Hit kembali API utama untuk sinkronisasi state baris tabel secara real-time
 };
 
 async function fetchDataUkt() {
@@ -147,7 +146,6 @@ async function fetchDataUkt() {
       ...(token && { Authorization: `Bearer ${token}` }),
     };
 
-    // 1. PANGGIL PARALEL API
     const [resMahasiswa, resProdi, resKeuangan, resKategoriUkt] = await Promise.all([
       axios.get(`https://api-mahasiswa-4a.akufarish.my.id:8874/api/mahasiswa`, {
         timeout: 10000,
@@ -172,7 +170,6 @@ async function fetchDataUkt() {
       }),
     ]);
 
-    // ── Parse Mahasiswa Utama ──
     const mhsBody = resMahasiswa.data;
     let listMahasiswa = [];
     if (mhsBody?.data?.data) {
@@ -189,7 +186,6 @@ async function fetchDataUkt() {
       return;
     }
 
-    // ── Parse Data Pendukung ──
     const listProdi       = resProdi.data?.data || resProdi.data || [];
     const keuBody         = resKeuangan.data;
     const listKeuangan    = keuBody?.data?.data || keuBody?.data || keuBody || [];
@@ -197,18 +193,15 @@ async function fetchDataUkt() {
     const kategoriUktBody = resKategoriUkt.data;
     const listKategoriUkt = kategoriUktBody?.data?.data || kategoriUktBody?.data || kategoriUktBody || [];
 
-    // ── LOOPING & MAPPING DATA MAHASISWA ──
     tableData.value = listMahasiswa.map((mahasiswa) => {
       const nimMhs = String(mahasiswa.nim || mahasiswa.NIM || "").trim();
       const idMhsUtama = String(mahasiswa.id || mahasiswa.ID || mahasiswa.id_mahasiswa || "").trim();
 
-      // 1. CARI RELASI KEUANGAN (Gunakan multi-kondisi ID & NIM demi akurasi)
       const keuanganMatch = Array.isArray(listKeuangan)
         ? listKeuangan.find((k) => {
             const idKeuMhs = String(k.id_mahasiswa || k.ID_MAHASISWA || k.id || k.ID || "").trim();
             const nimKeuMhs = String(k.nim || k.NIM || "").trim();
             
-            // Cocokkan berdasarkan ID Mahasiswa atau berdasarkan NIM
             const matchById = (idMhsUtama !== "" && idKeuMhs !== "") && (idMhsUtama === idKeuMhs);
             const matchByNim = (nimMhs !== "" && nimKeuMhs !== "") && (nimMhs === nimKeuMhs);
             
@@ -216,18 +209,15 @@ async function fetchDataUkt() {
           })
         : null;
 
-      // 2. AMBIL ID KATEGORI UKT (Cek semua kemungkinan properti pembungkus)
       const idKategoriUktMatch = keuanganMatch?.ID_KATEGORI || 
                                  keuanganMatch?.id_kategori_ukt || 
                                  keuanganMatch?.keuangan_mahasiswa?.ID_KATEGORI ||
                                  keuanganMatch?.kategori_ukt?.ID_KATEGORI || null;
 
-      // 3. CARI KE MASTER KATEGORI UKT
       const kategoriMatch = (idKategoriUktMatch && Array.isArray(listKategoriUkt))
         ? listKategoriUkt.find((kat) => String(kat.ID_KATEGORI || kat.id).trim() === String(idKategoriUktMatch).trim())
         : null;
 
-      // 4. SINKRONISASI TEKS GOLONGAN
       let namaGolonganFinal = "-";
       if (kategoriMatch?.GOLONGAN_UKT || kategoriMatch?.golongan_ukt) {
         namaGolonganFinal = kategoriMatch.GOLONGAN_UKT || kategoriMatch.golongan_ukt;
@@ -239,8 +229,7 @@ async function fetchDataUkt() {
         namaGolonganFinal = keuanganMatch.GOLONGAN_UKT || keuanganMatch.golongan_ukt;
       }
 
-      // Logika Pembersihan Data Jurusan & Prodi
-      const targetProdiId = mahasiswa.PRODI_ID || mahasiswa.prodi_id;
+      const targetProdiId = mahasiswa.PRODI_ID || mahasiswa.prodi_id || "";
       let rawJurusan = mahasiswa.jurusan?.name || mahasiswa.jurusan?.nama || mahasiswa.nama_jurusan || mahasiswa.jurusan || "";
       let rawProdi = mahasiswa.prodi?.name || mahasiswa.prodi?.nama || mahasiswa.nama_prodi || mahasiswa.prodi || "";
       const gabunganTeksMentah = `${String(rawJurusan)} ${String(rawProdi)}`.toLowerCase();
@@ -252,8 +241,8 @@ async function fetchDataUkt() {
       let finalJurusan = "", finalProdi = "";
 
       if (prodiDitemukan) {
-        finalJurusan = prodiDitemukan.nama_jurusan || prodiDitemukan.jurusan || "";
-        finalProdi   = prodiDitemukan.nama_prodi || prodiDitemukan.name || prodiDitemukan.nama || "";
+        finalJurusan = prodiDitemukan.nama_jurusan || prodiDitemukan.jurusan || "Teknik Elektro";
+        finalProdi   = prodiDitemukan.nama_prodi || prodiDitemukan.name || prodiDitemukan.nama || "D3 Teknik Informatika";
       } else {
         if (gabunganTeksMentah.includes("informatika") || gabunganTeksMentah.includes("ti")) {
           finalJurusan = "Teknik Elektro";
@@ -278,10 +267,18 @@ async function fetchDataUkt() {
         semester:          mahasiswa.SEMESTER || mahasiswa.semester || "1",
         jurusan_clean:     finalJurusan,
         prodi_clean:       finalProdi,
+        prodi_id:          targetProdiId, 
         golongan_ukt:      namaGolonganFinal, 
         golongan_ukt_nama: namaGolonganFinal, 
         id_kategori_ukt:   idKategoriUktMatch,
-        keuangan_id:       keuanganMatch?.id || keuanganMatch?.ID_KEUANGAN_MHS || keuanganMatch?.ID_KEUANGAN || null
+        // Cek baris ini di ukt.vue kamu dan ubah menjadi seperti ini:
+keuangan_id: keuanganMatch?.ID_KEUANGAN_MHS || // Tambahkan ini (versi uppercase sesuai DB)
+             keuanganMatch?.id_keuangan_mhs || // Tambahkan ini (antisipasi transformer camel/snakecase)
+             keuanganMatch?.id          ||
+             keuanganMatch?.ID          ||
+             keuanganMatch?.id_keuangan ||
+             keuanganMatch?.ID_KEUANGAN ||
+             keuanganMatch?.id_keuangan_mahasiswa || null
       };
     });
 
