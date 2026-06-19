@@ -95,7 +95,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import axios from "../service/axios";
+import axios from "../service/axios"; // Pastikan path ini benar sesuai struktur foldermu
 
 // --- API States ---
 const rawMahasiswaData = ref([]);
@@ -103,15 +103,24 @@ const isLoading = ref(false);
 const errorMessage = ref("");
 const filterJurusanChart = ref("");
 
-const BASE_URL = "https://api-mahasiswa-4a.akufarish.my.id:8874/docs/api#/";
-const AUTH_TOKEN = localStorage.getItem("token")
+// Gunakan endpoint yang benar
+const API_URL = "https://api-mahasiswa-4a.akufarish.my.id:8874/api/mahasiswa";
 
 // --- HIT DATA MAHASISWA ---
 const fetchDashboardData = async () => {
   isLoading.value = true;
   errorMessage.value = "";
+  
+  const AUTH_TOKEN = localStorage.getItem("token");
+
+  if (!AUTH_TOKEN) {
+    errorMessage.value = "Sesi login tidak valid atau token tidak ditemukan. Silakan login kembali.";
+    isLoading.value = false;
+    return;
+  }
+
   try {
-    const response = await axios.get(`${BASE_URL}/keuangan-mahasiswa`, {
+    const response = await axios.get(API_URL, {
       headers: {
         'Accept': 'application/json',
         'Authorization': `Bearer ${AUTH_TOKEN}`
@@ -122,29 +131,37 @@ const fetchDashboardData = async () => {
     });
 
     const resBody = response.data;
-    if (resBody && resBody.success) {
-      // Mendukung response pagination (.data.data) maupun array biasa (.data)
+    
+    // Sesuaikan dengan standar response pagination Laravel (resBody.data.data) 
+    // atau array biasa (resBody.data)
+    if (resBody && resBody.data) {
       rawMahasiswaData.value = resBody.data.data || resBody.data || [];
     } else {
-      errorMessage.value = "Gagal memproses struktur data dashboard.";
+      // Jika API langsung mengembalikan array
+      rawMahasiswaData.value = Array.isArray(resBody) ? resBody : [];
     }
   } catch (error) {
     console.error("Dashboard API Error:", error);
-    errorMessage.value = "Gagal terhubung ke backend untuk memuat statistik dashboard.";
+    if (error.response && error.response.status === 401) {
+       errorMessage.value = "Sesi habis (401 Unauthorized). Silakan login kembali.";
+    } else {
+       errorMessage.value = "Gagal terhubung ke backend untuk memuat statistik dashboard.";
+    }
   } finally {
     isLoading.value = false;
   }
 };
 
-// --- LOGIKA HITUNG OTOMATIS (COMPUTED PROPERTYS) ---
+// --- LOGIKA HITUNG OTOMATIS (COMPUTED PROPERTIES) ---
 
 // 1. Total Mahasiswa
 const totalMahasiswa = computed(() => rawMahasiswaData.value.length);
 
-// 2. Menghitung yang Sudah Membayar (Mencari status 'Lunas' atau 'Paid' / disesuaikan nilai API)
+// 2. Menghitung yang Sudah Membayar
 const sudahBayar = computed(() => {
   return rawMahasiswaData.value.filter(item => {
-    const status = (item.status_pembayaran || item.STATUS_PEMBAYARAN || item.status || '').toLowerCase();
+    // Pastikan key ini sesuai dengan response dari tabel/database API Laravel kamu
+    const status = (item.status_pembayaran || item.status || '').toLowerCase();
     return status === 'lunas' || status === 'paid' || status === 'aktif';
   }).length;
 });
@@ -158,14 +175,15 @@ const belumBayar = computed(() => {
 const dataJurusan = computed(() => {
   const urusanObj = {};
   rawMahasiswaData.value.forEach(item => {
-    const namaJurusan = item.jurusan || item.JURUSAN || "Lainnya";
+    // Pastikan key 'jurusan' atau 'prodi' sesuai dengan response API
+    const namaJurusan = item.jurusan || item.nama_jurusan || "Lainnya";
     if (!urusanObj[namaJurusan]) {
       urusanObj[namaJurusan] = 0;
     }
     urusanObj[namaJurusan]++;
   });
 
-  // Jika ada filter dropdown aktif, potong objek hanya tampilkan jurusan terpilih
+  // Jika ada filter dropdown aktif
   if (filterJurusanChart.value) {
     const filtered = {};
     if (urusanObj[filterJurusanChart.value] !== undefined) {
