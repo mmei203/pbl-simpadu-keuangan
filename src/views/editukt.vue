@@ -134,8 +134,6 @@ const filteredKategoriUkt = computed(() => {
     const angkaGolongan = matchAngka ? parseInt(matchAngka[0], 10) : null;
 
     const lolosGolongan = angkaGolongan !== null && angkaGolongan <= 5;
-    
-    // Jika data ID prodi mahasiswa kosong atau tidak terdefinisi, loloskan agar drop-down tidak kosong
     const lolosProdi = !idProdiMahasiswa || idProdiKategori === idProdiMahasiswa;
 
     return lolosGolongan && lolosProdi;
@@ -153,17 +151,19 @@ watch(() => props.selectedData, (newVal) => {
 
   console.log("editukt menangkap selectedData:", newVal);
 
-  // keuangan_id = ID angka dari tabel keuangan-mahasiswa (bukan UUID mahasiswa)
+  // Sesuaikan bagian ini agar mendeteksi ID_KEUANGAN_MHS terlebih dahulu
   const idKeuangan =
-    newVal.keuangan_id  ||
-    newVal.id_keuangan  ||
-    newVal.ID_KEUANGAN  ||
-    null;  // sengaja null jika tidak ada, supaya tidak pakai UUID mahasiswa
+    newVal.ID_KEUANGAN_MHS ||
+    newVal.id_keuangan_mhs ||
+    newVal.keuangan_id     ||
+    newVal.id_keuangan     ||
+    newVal.ID_KEUANGAN     ||
+    null;
 
   const idMhs =
     newVal.id_mahasiswa || newVal.ID_MAHASISWA || newVal.mahasiswa_id || "";
 
-  // Cek semua kemungkinan letak id prodi dari konsol log
+  // Sisa kode ke bawah tetap sama...
   const prodiIdDidapat = newVal.id_prodi || newVal.prodi_id || newVal.PRODI_ID || newVal.prodi?.id || "";
   const prodiNamaDidapat = newVal.prodi_clean || newVal.prodi?.nama || newVal.prodi?.name || newVal.prodi || "Teknik Informatika";
 
@@ -185,10 +185,10 @@ const handleUpdate = async () => {
     return;
   }
 
-  // Harus pakai ID keuangan (angka), BUKAN UUID mahasiswa
-  const idEndpoint = editForm.id;
+  // Jika editForm.id kosong, gunakan id_mahasiswa atau nim agar request tetap terkirim ke API
+  const idEndpoint = editForm.id || editForm.id_mahasiswa || editForm.nim;
   if (!idEndpoint) {
-    alert("ID transaksi keuangan tidak ditemukan.\n\nData ini mungkin belum punya entri di tabel keuangan-mahasiswa.");
+    alert("ID Data tidak ditemukan. Mohon cek baris mahasiswa kembali.");
     return;
   }
 
@@ -196,14 +196,16 @@ const handleUpdate = async () => {
   try {
     const token = localStorage.getItem("token");
 
-    // Kirim payload dengan berbagai variasi key field database (untuk mengatasi Error 500)
     const payload = {
+      id_mahasiswa:    editForm.id_mahasiswa,
+      nim:             editForm.nim,
       id_kategori_ukt: editForm.id_kategori_ukt,
       ID_KATEGORI_UKT: editForm.id_kategori_ukt,
       id_kategori:     editForm.id_kategori_ukt,
       ID_KATEGORI:     editForm.id_kategori_ukt
     };
 
+    // Catatan: Ganti URL di bawah ini ke `/api/kategori-ukt/${idEndpoint}` jika backend meminta endpoint tersebut
     await axios.put(
       `https://api-keuangan-4a.akufarish.my.id:8873/api/keuangan-mahasiswa/${idEndpoint}`,
       payload,
@@ -220,7 +222,8 @@ const handleUpdate = async () => {
     emit("update");
   } catch (error) {
     console.error("Gagal update UKT:", error);
-    alert("Gagal memperbarui data UKT ke server API.");
+    const msg = error.response?.data?.message || "Gagal memperbarui data UKT ke server API.";
+    alert(`Error: ${msg}\n\nSilakan cek tab Network (F12) untuk melihat detail error.`);
   } finally {
     isUpdating.value = false;
   }

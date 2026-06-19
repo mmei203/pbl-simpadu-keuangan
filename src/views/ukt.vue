@@ -271,12 +271,14 @@ async function fetchDataUkt() {
         golongan_ukt:      namaGolonganFinal, 
         golongan_ukt_nama: namaGolonganFinal, 
         id_kategori_ukt:   idKategoriUktMatch,
-        // keuangan_id = ID angka dari baris keuangan-mahasiswa, dipakai editukt untuk PUT endpoint
-        keuangan_id: keuanganMatch?.id          ||
-                     keuanganMatch?.ID          ||
-                     keuanganMatch?.id_keuangan ||
-                     keuanganMatch?.ID_KEUANGAN ||
-                     keuanganMatch?.id_keuangan_mahasiswa || null
+        // Cek baris ini di ukt.vue kamu dan ubah menjadi seperti ini:
+keuangan_id: keuanganMatch?.ID_KEUANGAN_MHS || // Tambahkan ini (versi uppercase sesuai DB)
+             keuanganMatch?.id_keuangan_mhs || // Tambahkan ini (antisipasi transformer camel/snakecase)
+             keuanganMatch?.id          ||
+             keuanganMatch?.ID          ||
+             keuanganMatch?.id_keuangan ||
+             keuanganMatch?.ID_KEUANGAN ||
+             keuanganMatch?.id_keuangan_mahasiswa || null
       };
     });
 
