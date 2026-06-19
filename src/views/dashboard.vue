@@ -72,35 +72,35 @@
       <div class="dashboard-grid">
         <div class="chart-card">
           <div class="chart-header">
-            <h3>Grafik Mahasiswa Jurusan</h3>
-            <select v-model="filterJurusanChart">
-              <option value="">Semua Jurusan</option>
-              <option v-for="(val, key) in dataJurusan" :key="key" :value="key">{{ key }}</option>
+            <h3>Grafik Mahasiswa per Prodi</h3>
+            <select v-model="filterProdiChart">
+              <option value="">Semua Prodi</option>
+              <option v-for="(val, key) in dataProdi" :key="key" :value="key">{{ key }}</option>
             </select>
           </div>
 
           <div class="bar-chart-container">
-            <div v-if="Object.keys(dataJurusan).length === 0" class="empty-chart">Tidak ada data jurusan ditemukan</div>
-            <div v-for="(count, jurusanName) in dataJurusan" :key="jurusanName" class="bar-group">
+            <div v-if="Object.keys(dataProdi).length === 0" class="empty-chart">Tidak ada data prodi ditemukan</div>
+            <div v-for="(count, prodiName) in dataProdi" :key="prodiName" class="bar-group">
               <div class="bar-wrapper">
                 <div 
                   class="bar-fill" 
-                  :style="{ height: `${(count / (maxMahasiswaDiJurusan || 1)) * 100}%` }"
+                  :style="{ height: `${(count / (maxMahasiswaDiProdi || 1)) * 100}%` }"
                   :title="`${count} Mahasiswa`"
                 >
                   <span class="bar-tooltip">{{ count }}</span>
                 </div>
               </div>
-              <span class="bar-label">{{ jurusanName }}</span>
+              <span class="bar-label">{{ prodiName }}</span>
             </div>
           </div>
         </div>
 
         <div class="list-card">
-          <div v-if="Object.keys(dataJurusan).length === 0" class="empty-list">Belum ada rincian data.</div>
-          <div v-for="(count, jurusanName) in dataJurusan" :key="jurusanName" class="jurusan-row-item">
+          <div v-if="Object.keys(dataProdi).length === 0" class="empty-list">Belum ada rincian data.</div>
+          <div v-for="(count, prodiName) in dataProdi" :key="prodiName" class="jurusan-row-item">
             <div>
-              <h4>Teknik {{ jurusanName }}</h4>
+              <h4>{{ prodiName }}</h4>
               <p>{{ count }} Mahasiswa</p>
             </div>
           </div>
@@ -115,18 +115,20 @@ import { ref, computed, onMounted } from "vue";
 import axios from "../service/axios"; 
 
 const rawMahasiswaData = ref([]);
-const rawTagihanData = ref([]); 
+const rawTagihanData = ref([]);
+const listProdi = ref([]);
 const isLoading = ref(false);
 const errorMessage = ref("");
-const filterJurusanChart = ref("");
+const filterProdiChart = ref("");
 
 const API_URL_MAHASISWA = "https://api-mahasiswa-4a.akufarish.my.id:8874/api/mahasiswa";
 const API_URL_TAGIHAN = "https://api-keuangan-4a.akufarish.my.id:8873/api/tagihan";
+const API_URL_PRODI = "https://be.karlearn.site/api/prodi";
 
 const fetchDashboardData = async () => {
   isLoading.value = true;
   errorMessage.value = "";
-  
+
   const AUTH_TOKEN = localStorage.getItem("token");
   if (!AUTH_TOKEN) {
     errorMessage.value = "Sesi login tidak valid atau token tidak ditemukan. Silakan login kembali.";
@@ -142,22 +144,24 @@ const fetchDashboardData = async () => {
   };
 
   try {
-    //Ambil data mahasiswa
-    const resMhs = await axios.get(API_URL_MAHASISWA, {
-      ...apiConfig,
-      params: { per_page: 150 }
-    });
+    // Ambil data mahasiswa, tagihan, dan prodi secara paralel
+    const [resMhs, resTagihan, resProdi] = await Promise.all([
+      axios.get(API_URL_MAHASISWA, { ...apiConfig, params: { per_page: 150 } }),
+      axios.get(API_URL_TAGIHAN, apiConfig),
+      axios.get(API_URL_PRODI, apiConfig),
+    ]);
+
     if (resMhs.data && resMhs.data.data) {
       rawMahasiswaData.value = resMhs.data.data.data || resMhs.data.data || [];
     }
 
-    //Ambil data tagihan langsung dari API Keuangan
-    const resTagihan = await axios.get(API_URL_TAGIHAN, apiConfig);
     if (resTagihan.data && resTagihan.data.data) {
-      rawTagihanData.value = Array.isArray(resTagihan.data.data) 
-        ? resTagihan.data.data 
+      rawTagihanData.value = Array.isArray(resTagihan.data.data)
+        ? resTagihan.data.data
         : [resTagihan.data.data];
     }
+
+    listProdi.value = resProdi.data?.data || resProdi.data || [];
   } catch (error) {
     console.error("Dashboard API Error:", error);
     if (error.response && error.response.status === 401) {
@@ -185,30 +189,45 @@ const sudahBayar = computed(() => {
   return rawTagihanData.value.filter(item => item.STATUS_BAYAR && item.STATUS_BAYAR.trim().toUpperCase() === 'LUNAS').length;
 });
 
-const dataJurusan = computed(() => {
-  const urusanObj = {};
+// Cari nama prodi yang akurat untuk satu mahasiswa.
+// Sama persis dengan logika resolve di halaman Status Mahasiswa:
+// 1. Coba cocokkan prodi_id ke listProdi (sumber paling akurat)
+// 2. Kalau tidak ketemu, fallback ke field teks mentah (nama_prodi) yang mungkin ada di data mahasiswa
+function resolveNamaProdi(mahasiswa) {
+  const targetProdiId = mahasiswa.prodi_id;
+  const prodiDitemukan = Array.isArray(listProdi.value)
+    ? listProdi.value.find((p) => String(p.id).trim() === String(targetProdiId).trim())
+    : null;
+
+  if (prodiDitemukan) {
+    return prodiDitemukan.nama_prodi || prodiDitemukan.name || prodiDitemukan.nama || "Lainnya";
+  }
+
+  // Fallback kalau prodi_id tidak ketemu di listProdi
+  return mahasiswa.nama_prodi || mahasiswa.prodi || "Lainnya";
+}
+
+// Breakdown jumlah mahasiswa PER PRODI (Teknik Elektro, Sistem Informasi Kota Cerdas, dst)
+const dataProdi = computed(() => {
+  const prodiObj = {};
   rawMahasiswaData.value.forEach(item => {
-    let namaJurusan = item.jurusan || item.nama_jurusan || item.prodi || item.nama_prodi || item.prodi_nama || "Lainnya";
-    if (typeof namaJurusan === 'string') {
-      namaJurusan = namaJurusan.replace(/teknik\s+/i, "").trim();
-      namaJurusan = namaJurusan.charAt(0).toUpperCase() + namaJurusan.slice(1);
-    }
-    if (!urusanObj[namaJurusan]) urusanObj[namaJurusan] = 0;
-    urusanObj[namaJurusan]++;
+    const namaProdi = resolveNamaProdi(item);
+    if (!prodiObj[namaProdi]) prodiObj[namaProdi] = 0;
+    prodiObj[namaProdi]++;
   });
 
-  if (filterJurusanChart.value) {
+  if (filterProdiChart.value) {
     const filtered = {};
-    if (urusanObj[filterJurusanChart.value] !== undefined) {
-      filtered[filterJurusanChart.value] = urusanObj[filterJurusanChart.value];
+    if (prodiObj[filterProdiChart.value] !== undefined) {
+      filtered[filterProdiChart.value] = prodiObj[filterProdiChart.value];
     }
     return filtered;
   }
-  return urusanObj;
+  return prodiObj;
 });
 
-const maxMahasiswaDiJurusan = computed(() => {
-  const counts = Object.values(dataJurusan.value);
+const maxMahasiswaDiProdi = computed(() => {
+  const counts = Object.values(dataProdi.value);
   if (counts.length === 0) return 1;
   return Math.max(...counts);
 });
